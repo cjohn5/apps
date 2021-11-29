@@ -579,14 +579,86 @@ int32 TC_RcvMsg(int32 iBlocking)
 void TC_ProcessWheTlm(void* TlmMsgPtr){
    whe_hk_tlm_t* whe_tlm_ptr = (whe_hk_tlm_t*)TlmMsgPtr;
    tlmDebug++;
-   
+
+   if(whe_tlm_ptr->whe_temp > 20 && (whe_tlm_ptr->whe_sbc_state == 1 || whe_tlm_ptr->whe_sbc_state == 0)){
+       if(whe_tlm_ptr->whe_htr == 0){
+           CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_HTR_OFF_CC);
+           CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+           CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+       }
+   }
+
+   if(whe_tlm_ptr->whe_temp < 20 && (whe_tlm_ptr->whe_sbc_state == 1 || whe_tlm_ptr->whe_sbc_state == 0)){
+       if(whe_tlm_ptr->whe_louver == 0){
+           CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_LOUVER_CLOSE_CC);
+           CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+           CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+       }
+   }
+
+
+   if(whe_tlm_ptr->whe_temp < 15 && (whe_tlm_ptr->whe_sbc_state == 1 || whe_tlm_ptr->whe_sbc_state == 2)){
+       if(whe_tlm_ptr->whe_louver == 1){
+           CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_LOUVER_OPEN_CC);
+           CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+           CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+       }
+       if(whe_tlm_ptr->whe_htr == 1){
+           CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_HTR_OFF_CC);
+           CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+           CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+       }
+   }
+
+	
+   if(whe_tlm_ptr->whe_temp > 25 && (whe_tlm_ptr->whe_sbc_state == 1 || whe_tlm_ptr->whe_sbc_state == 2)){
+       if(whe_tlm_ptr->whe_louver == 0){
+           CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_LOUVER_OPEN_CC);
+           CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+           CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+       }
+       if(whe_tlm_ptr->whe_htr == 0){
+           CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_HTR_OFF_CC);
+           CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+           CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+       }
+   }
+
+      if(whe_tlm_ptr->whe_temp <= 5 && (whe_tlm_ptr->whe_sbc_state == 0 )){
+       if(whe_tlm_ptr->whe_louver == 1){
+           CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_LOUVER_OPEN_CC);
+           CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+           CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+       }
+       if(whe_tlm_ptr->whe_htr == 1){
+           CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_HTR_OFF_CC);
+           CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+           CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+       }
+   }
+
+	
+   if(whe_tlm_ptr->whe_temp >= 40 && (whe_tlm_ptr->whe_sbc_state == 0)){
+       if(whe_tlm_ptr->whe_louver == 0){
+           CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_LOUVER_OPEN_CC);
+           CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+           CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+       }
+       if(whe_tlm_ptr->whe_htr == 0){
+           CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_HTR_OFF_CC);
+           CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+           CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+       }
+   }\
+/*
    if(tlmDebug == 5){
        CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_HTR_ON_CC);
        CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
        CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
    }
-   CFE_ES_WriteToSysLog("Temp is: %i, Heater state is: %i\n", whe_tlm_ptr->whe_temp, whe_tlm_ptr->whe_htr);
-   CFE_ES_WriteToSysLog("#Tlm Recieved: %i\n", tlmDebug);
+*/
+   CFE_ES_WriteToSysLog("Temp is: %i, Heater state is: %i\n, Louver state is: %i", whe_tlm_ptr->whe_temp, whe_tlm_ptr->whe_htr, whe_tlm_ptr->whe_louver );
+   //CFE_ES_WriteToSysLog("#Tlm Recieved: %i\n", tlmDebug);
 }
     
 /*=====================================================================================
