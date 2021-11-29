@@ -63,6 +63,7 @@
 ** Global Variables
 */
 TC_AppData_t  g_TC_AppData;
+int tlmDebug = 0;
 
 /*
 ** Local Variables
@@ -344,6 +345,10 @@ int32 TC_InitData()
     CFE_SB_InitMsg(&g_TC_AppData.HkTlm,
                    TC_HK_TLM_MID, sizeof(g_TC_AppData.HkTlm), TRUE);
 
+    memset((void*)&g_TC_AppData.whe_cmd, 0x00, sizeof(g_TC_AppData.whe_cmd));
+    CFE_SB_InitMsg(&g_TC_AppData.whe_cmd,
+                   WHE_CMD_MID, sizeof(g_TC_AppData.whe_cmd), TRUE);
+
     return (iStatus);
 }
     
@@ -573,7 +578,15 @@ int32 TC_RcvMsg(int32 iBlocking)
 
 void TC_ProcessWheTlm(void* TlmMsgPtr){
    whe_hk_tlm_t* whe_tlm_ptr = (whe_hk_tlm_t*)TlmMsgPtr;
-   CFE_ES_WriteToSysLog("Temp is: %i\n", whe_tlm_ptr->whe_temp);
+   tlmDebug++;
+   
+   if(tlmDebug == 5){
+       CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_HTR_ON_CC);
+       CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+       CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+   }
+   CFE_ES_WriteToSysLog("Temp is: %i, Heater state is: %i\n", whe_tlm_ptr->whe_temp, whe_tlm_ptr->whe_htr);
+   CFE_ES_WriteToSysLog("#Tlm Recieved: %i\n", tlmDebug);
 }
     
 /*=====================================================================================

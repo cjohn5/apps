@@ -54,6 +54,12 @@ typedef struct
 
 } TC_HkTlm_t;
 
+typedef struct
+{
+    uint8 	      CmdHeader[CFE_SB_CMD_HDR_SIZE];
+
+} whe_cmd_val_pipe;
+
 
 #endif /* _TC_MSG_H_ */
 
