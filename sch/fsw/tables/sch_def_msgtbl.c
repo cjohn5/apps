@@ -176,6 +176,8 @@ SCH_MessageEntry_t SCH_DefaultMessageTable[SCH_MAX_MESSAGES] =
   { { CFE_MAKE_BIG16(WHE_1HZ_WAKEUP_MID),       CFE_MAKE_BIG16(0xC000), CFE_MAKE_BIG16(0x0001), 0x0000  } },
     /* command ID #26 */
   { { CFE_MAKE_BIG16(TC_WAKEUP_MID),       CFE_MAKE_BIG16(0xC000), CFE_MAKE_BIG16(0x0001), 0x0000  } },
+    /* command ID #27 */
+  { { CFE_MAKE_BIG16(SCH_UNUSED_MID) } },
     /* command ID #28 */
   { { CFE_MAKE_BIG16(SCH_UNUSED_MID) } },
     /* command ID #29 */
