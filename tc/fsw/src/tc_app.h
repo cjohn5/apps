@@ -38,6 +38,7 @@
 #include "tc_perfids.h"
 #include "tc_msgids.h"
 #include "tc_msg.h"
+#include "whe_msg.h"
 
  
 #include "tc_iload_utils.h"
@@ -88,6 +89,8 @@ typedef struct
     /* Housekeeping telemetry - for downlink only.
        Data structure should be defined in tc/fsw/src/tc_msg.h */
     TC_HkTlm_t  HkTlm;
+
+    whe_hk_tlm_t WheTlm;
 
     /* TODO:  Add declarations for additional private data here */
 } TC_AppData_t;

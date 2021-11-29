@@ -44,6 +44,8 @@
 #include "tc_platform_cfg.h"
 #include "tc_mission_cfg.h"
 #include "tc_app.h"
+#include "whe_msg.h"
+#include "whe_msgids.h"
 
 /*
 ** Local Defines
@@ -272,6 +274,8 @@ int32 TC_InitPipe()
         ** Examples:
         **     CFE_SB_Subscribe(GNCEXEC_OUT_DATA_MID, g_TC_AppData.TlmPipeId);
         */
+
+	CFE_SB_Subscribe(WHE_HK_TLM_MID, g_TC_AppData.TlmPipeId);
     }
     else
     {
@@ -566,6 +570,11 @@ int32 TC_RcvMsg(int32 iBlocking)
 
     return (iStatus);
 }
+
+void TC_ProcessWheTlm(void* TlmMsgPtr){
+   whe_hk_tlm_t* whe_tlm_ptr = (whe_hk_tlm_t*)TlmMsgPtr;
+   CFE_ES_WriteToSysLog("Temp is: %i\n", whe_tlm_ptr->whe_temp);
+}
     
 /*=====================================================================================
 ** Name: TC_ProcessNewData
@@ -629,6 +638,9 @@ void TC_ProcessNewData()
                 **         TC_ProcessNavData(TlmMsgPtr);
                 **         break;
                 */
+		case(WHE_HK_TLM_MID):
+			TC_ProcessWheTlm(TlmMsgPtr);
+                        break;
 
                 default:
                     CFE_EVS_SendEvent(TC_MSGID_ERR_EID, CFE_EVS_ERROR,
@@ -649,6 +661,8 @@ void TC_ProcessNewData()
         }
     }
 }
+
+
     
 /*=====================================================================================
 ** Name: TC_ProcessNewCmds
