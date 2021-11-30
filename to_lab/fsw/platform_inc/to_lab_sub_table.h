@@ -44,8 +44,7 @@ static TO_subsciption_t  TO_SubTable[] =
             {TO_LAB_DATA_TYPES_MID, {0,0},  4},
             {CI_LAB_HK_TLM_MID,     {0,0},  4},
             {WHE_HK_TLM_MID,    {0,0},  4},
-	    {TC_TLM_MID,    {0,0},  4},
-	    {TC_CMD_MID,    {0,0},  4},
+	    {TC_HK_TLM_MID,    {0,0},  4},
 
 #if 1
             /* Add these if needed */

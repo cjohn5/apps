@@ -38,7 +38,6 @@
 #include "tc_perfids.h"
 #include "tc_msgids.h"
 #include "tc_msg.h"
-#include "whe_msg.h"
 
  
 #include "tc_iload_utils.h"
@@ -48,6 +47,17 @@
 */
 #define TC_TIMEOUT_MSEC    1000
 
+#define TC_STATE_READY      0
+#define TC_STATE_MONITORING 1
+#define TC_STATE_HEATING    2
+#define TC_STATE_COOLING    3
+#define TC_STATE_ERROR      4
+
+#define TC_LOG_DEBUG   0
+#define TC_LOG_INFO    1
+#define TC_LOG_WARNING 2
+#define TC_LOG_ERROR   3
+#define TC_LOG_DEFAULT_STATE TC_LOG_WARNING
 /*
 ** Local Structure Declarations
 */
@@ -91,7 +101,6 @@ typedef struct
        Data structure should be defined in tc/fsw/src/tc_msg.h */
     TC_HkTlm_t  HkTlm;
 
-    whe_hk_tlm_t WheTlm;
     whe_cmd_val_pipe whe_cmd;
 
     /* TODO:  Add declarations for additional private data here */

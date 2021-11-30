@@ -350,6 +350,9 @@ int32 TC_InitData()
     CFE_SB_InitMsg(&g_TC_AppData.whe_cmd,
                    WHE_CMD_MID, sizeof(g_TC_AppData.whe_cmd), TRUE);
 
+    g_TC_AppData.HkTlm.WISE_Tlm_Packets_Rcvd = 0;
+    g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_READY;
+    g_TC_AppData.HkTlm.TCA_Logging_State = TC_LOG_DEFAULT_STATE;
     return (iStatus);
 }
     
@@ -591,47 +594,103 @@ int32 TC_RcvMsg(int32 iBlocking)
 
 void TC_ProcessWheTlm(void* TlmMsgPtr){
    whe_hk_tlm_t* whe_tlm_ptr = (whe_hk_tlm_t*)TlmMsgPtr;
-   tlmDebug++;
+   g_TC_AppData.HkTlm.WISE_Tlm_Packets_Rcvd++;
 
+//CFE_ES_WriteToSysLog("Temp is: %i, Heater state is: %i\n, Louver state is: %i", whe_tlm_ptr->whe_temp, whe_tlm_ptr->whe_htr, whe_tlm_ptr->whe_louver );
+
+   if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_DEBUG){
+      CFE_ES_WriteToSysLog("DEBUG_TC: TC-state=%i WISE-state=%i WISE-temp=%i WISE-heater=%i WISE-louver=%i WISE-numTLM=%i\n", 
+         g_TC_AppData.HkTlm.TCA_Current_State,
+         whe_tlm_ptr->whe_sbc_state,
+         whe_tlm_ptr->whe_temp,
+         whe_tlm_ptr->whe_htr,
+         whe_tlm_ptr->whe_louver,
+         g_TC_AppData.HkTlm.WISE_Tlm_Packets_Rcvd
+         );
+   }
+   if(g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_READY){
+      g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_MONITORING;
+      if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_INFO){
+         CFE_ES_WriteToSysLog("INFO_TC: Entered Monitoring State");
+      }
+   }
    if(whe_tlm_ptr->whe_sbc_state == SBC_ERROR){
        //place the tc app in error state
+       g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_ERROR;
+       CFE_ES_WriteToSysLog("ERROR_TC: Entered Error State");
    }
    //if the instrument is inactive/not-observing (off or powered)
    else if(whe_tlm_ptr->whe_sbc_state == SBC_POWERED || whe_tlm_ptr->whe_sbc_state == SBC_OFF){
        
        //if temperature is too high
        if(whe_tlm_ptr->whe_temp >= g_TC_AppData.ThresholdTemps.NeedsCooling_Inactive){
+          if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_DEBUG){
+             CFE_ES_WriteToSysLog("DEBUG_TC: Inactive temp is high");
+           }
            if(whe_tlm_ptr->whe_louver == LOUVER_CLOSE){
+               if(g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_HEATING){
+                  if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_WARNING){
+                     CFE_ES_WriteToSysLog("WARNING_TC: Switching directly from HEATING to COOLING");
+                  }
+               }
+               g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_COOLING;
+
                CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_LOUVER_OPEN_CC);
                CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
                CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+               if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_INFO){
+                  CFE_ES_WriteToSysLog("INFO_TC: Commanded Louver Open, entering COOLING state");
+               }
            }
        }
 
        //if temperature is hot enough
        if(whe_tlm_ptr->whe_temp >= g_TC_AppData.ThresholdTemps.HotEnough_Inactive){
            if(whe_tlm_ptr->whe_htr == HTR_ON){
+               g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_MONITORING;
+
                CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_HTR_OFF_CC);
                CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
                CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+               if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_INFO){
+                  CFE_ES_WriteToSysLog("INFO_TC: Commanded Heater Off, entering MONITORING state");
+               }
            }
        }
 
        //if temperature is cool enough
        if(whe_tlm_ptr->whe_temp < g_TC_AppData.ThresholdTemps.CoolEnough_Inactive){
            if(whe_tlm_ptr->whe_louver == LOUVER_OPEN){
+               g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_MONITORING;
+
                CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_LOUVER_CLOSE_CC);
                CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
                CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+               if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_INFO){
+                  CFE_ES_WriteToSysLog("INFO_TC: Commanded Louver Closed, entering MONITORING state");
+               }
            }
        }
 
        //if temperature is too low
        if(whe_tlm_ptr->whe_temp <= g_TC_AppData.ThresholdTemps.NeedsHeating_Inactive){
+          if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_DEBUG){
+             CFE_ES_WriteToSysLog("DEBUG_TC: Inactive temp is low");
+           }
            if(whe_tlm_ptr->whe_htr == HTR_OFF){
+               if(g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_COOLING){
+                  if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_WARNING){
+                     CFE_ES_WriteToSysLog("WARNING_TC: Switching directly from COOLING to HEATING");
+                  }
+               }
+               g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_HEATING;
+
                CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_HTR_ON_CC);
                CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
                CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+               if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_INFO){
+                  CFE_ES_WriteToSysLog("INFO_TC: Commanded Heater On, entering HEATING state");
+               }
            }
        }
    }
@@ -640,50 +699,76 @@ void TC_ProcessWheTlm(void* TlmMsgPtr){
        
        //if temperature is too high
        if(whe_tlm_ptr->whe_temp >= g_TC_AppData.ThresholdTemps.NeedsCooling_Active){
+          if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_DEBUG){
+             CFE_ES_WriteToSysLog("DEBUG_TC: Active temp is high");
+           }
            if(whe_tlm_ptr->whe_louver == LOUVER_CLOSE){
+               if(g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_HEATING){
+                  if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_WARNING){
+                     CFE_ES_WriteToSysLog("WARNING_TC: Switching directly from HEATING to COOLING");
+                  }
+               }
+               g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_COOLING;
+
                CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_LOUVER_OPEN_CC);
                CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
                CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+               if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_INFO){
+                  CFE_ES_WriteToSysLog("INFO_TC: Commanded Louver Open, entering COOLING state");
+               }
            }
        }
 
        //if temperature is hot enough
        if(whe_tlm_ptr->whe_temp >= g_TC_AppData.ThresholdTemps.HotEnough_Active){
            if(whe_tlm_ptr->whe_htr == HTR_ON){
+               g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_MONITORING;
+
                CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_HTR_OFF_CC);
                CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
                CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+               if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_INFO){
+                  CFE_ES_WriteToSysLog("INFO_TC: Commanded Heater Off, entering MONITORING state");
+               }
            }
        }
 
        //if temperature is cool enough
        if(whe_tlm_ptr->whe_temp < g_TC_AppData.ThresholdTemps.CoolEnough_Active){
            if(whe_tlm_ptr->whe_louver == LOUVER_OPEN){
+               g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_MONITORING;
+
                CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_LOUVER_CLOSE_CC);
                CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
                CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+               if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_INFO){
+                  CFE_ES_WriteToSysLog("INFO_TC: Commanded Louver Closed, entering MONITORING state");
+               }
            }
        }
 
        //if temperature is too low
        if(whe_tlm_ptr->whe_temp <= g_TC_AppData.ThresholdTemps.NeedsHeating_Active){
+          if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_DEBUG){
+             CFE_ES_WriteToSysLog("DEBUG_TC: Active temp is low");
+           }
            if(whe_tlm_ptr->whe_htr == HTR_OFF){
+               if(g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_COOLING){
+                  if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_WARNING){
+                     CFE_ES_WriteToSysLog("WARNING_TC: Switching directly from COOLING to HEATING");
+                  }
+               }
+               g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_HEATING;
+
                CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_HTR_ON_CC);
                CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
                CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+               if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_INFO){
+                  CFE_ES_WriteToSysLog("INFO_TC: Commanded Heater On, entering HEATING state");
+               }
            }
        }
    }
-
-/*
-   if(tlmDebug == 5){
-       CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_HTR_ON_CC);
-       CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
-       CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
-   }
-*/
-   CFE_ES_WriteToSysLog("Temp is: %i, Heater state is: %i\n, Louver state is: %i", whe_tlm_ptr->whe_temp, whe_tlm_ptr->whe_htr, whe_tlm_ptr->whe_louver );
-   //CFE_ES_WriteToSysLog("#Tlm Recieved: %i\n", tlmDebug);
 }
     
 /*=====================================================================================
@@ -910,6 +995,7 @@ void TC_ProcessNewCmds()
 void TC_ProcessNewAppCmds(CFE_SB_Msg_t* MsgPtr)
 {
     uint32  uiCmdCode=0;
+    tc_logging_level_cmd_t* tc_logging_level_cmd;
 
     if (MsgPtr != NULL)
     {
@@ -925,11 +1011,22 @@ void TC_ProcessNewAppCmds(CFE_SB_Msg_t* MsgPtr)
             case TC_RESET_CC:
                 g_TC_AppData.HkTlm.usCmdCnt = 0;
                 g_TC_AppData.HkTlm.usCmdErrCnt = 0;
+		g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_READY;
+		g_TC_AppData.HkTlm.WISE_Tlm_Packets_Rcvd = 0;
+		g_TC_AppData.HkTlm.TCA_Logging_State = TC_LOG_WARNING;
                 CFE_EVS_SendEvent(TC_CMD_INF_EID, CFE_EVS_INFORMATION,
                                   "TC - Recvd RESET cmd (%d)", uiCmdCode);
                 break;
 
             /* TODO:  Add code to process the rest of the TC commands here */
+
+            case TC_ENABLE_LOGGING:
+                tc_logging_level_cmd = (tc_logging_level_cmd_t*) MsgPtr;
+                g_TC_AppData.HkTlm.usCmdCnt++;
+		g_TC_AppData.HkTlm.TCA_Logging_State = tc_logging_level_cmd->CmdLoggingLevel;
+                CFE_EVS_SendEvent(TC_CMD_INF_EID, CFE_EVS_INFORMATION,
+                                  "TC - Recvd ENABLE_LOGGING cmd (%d) - set to (%i)", uiCmdCode, g_TC_AppData.HkTlm.TCA_Logging_State);
+                break;
 
             default:
                 g_TC_AppData.HkTlm.usCmdErrCnt++;
@@ -1028,8 +1125,10 @@ void TC_SendOutData()
 {
     /* TODO:  Add code to update output data, if needed, here.  */
 
-    CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.OutData);
-    CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.OutData);
+    TC_ReportHousekeeping();
+
+    //CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.OutData);
+    //CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.OutData);
 }
     
 /*=====================================================================================

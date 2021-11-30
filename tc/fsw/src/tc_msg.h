@@ -52,7 +52,7 @@ typedef struct
     uint8              usCmdErrCnt;
     uint16	       WISE_Tlm_Packets_Rcvd;
     uint8	       TCA_Current_State;
-    uint8              TCA_Logging_State;
+    uint8             TCA_Logging_State;
 
 } TC_HkTlm_t;
 
@@ -62,6 +62,11 @@ typedef struct
 
 } whe_cmd_val_pipe;
 
+typedef struct
+{
+    uint8             CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    uint8             CmdLoggingLevel;
+} tc_logging_level_cmd_t;
 
 #endif /* _TC_MSG_H_ */
 
