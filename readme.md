@@ -30,6 +30,7 @@ Note: you may need to run `git checkout .` to discard changes
 cp ~/cfs/apps/tc/fsw/platform_inc/tc_msgids.h ~/cfs/build/cpu1/inc/
 cp ~/cfs/apps/tc/fsw/tables/tc_tbldefs.h ~/cfs/build/cpu1/inc/
 cp ~/cfs/apps/whe/fsw/src/whe_msg.h ~/cfs/build/cpu1/inc/
+cp ~/cfs/apps/whe/fsw/src/whe.h ~/cfs/build/cpu1/inc/
 cd ~/cfs
 . ./setvars.sh
 cd ~/cfs/build/cpu1

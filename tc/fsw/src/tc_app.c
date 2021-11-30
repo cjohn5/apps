@@ -44,6 +44,7 @@
 #include "tc_platform_cfg.h"
 #include "tc_mission_cfg.h"
 #include "tc_app.h"
+#include "whe.h"
 #include "whe_msg.h"
 #include "whe_msgids.h"
 
@@ -426,6 +427,18 @@ TC_InitApp_Exit_Tag:
     {
         CFE_EVS_SendEvent(TC_INIT_INF_EID, CFE_EVS_INFORMATION,
                           "TC - Application initialized");
+
+
+        CFE_ES_WriteToSysLog("DEBUG: Threshold Temp Table Values: (active): %i,%i,%i,%i (inactive): %i,%i,%i,%i",
+            g_TC_AppData.ThresholdTemps.NeedsCooling_Active,
+            g_TC_AppData.ThresholdTemps.CoolEnough_Active,
+            g_TC_AppData.ThresholdTemps.HotEnough_Active,
+            g_TC_AppData.ThresholdTemps.NeedsHeating_Active,
+            g_TC_AppData.ThresholdTemps.NeedsCooling_Inactive,
+            g_TC_AppData.ThresholdTemps.CoolEnough_Inactive,
+            g_TC_AppData.ThresholdTemps.HotEnough_Inactive,
+            g_TC_AppData.ThresholdTemps.NeedsHeating_Inactive 
+            );
     }
     else
     {
@@ -580,76 +593,88 @@ void TC_ProcessWheTlm(void* TlmMsgPtr){
    whe_hk_tlm_t* whe_tlm_ptr = (whe_hk_tlm_t*)TlmMsgPtr;
    tlmDebug++;
 
-   if(whe_tlm_ptr->whe_temp > 20 && (whe_tlm_ptr->whe_sbc_state == 1 || whe_tlm_ptr->whe_sbc_state == 0)){
-       if(whe_tlm_ptr->whe_htr == 0){
-           CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_HTR_OFF_CC);
-           CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
-           CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+   if(whe_tlm_ptr->whe_sbc_state == SBC_ERROR){
+       //place the tc app in error state
+   }
+   //if the instrument is inactive/not-observing (off or powered)
+   else if(whe_tlm_ptr->whe_sbc_state == SBC_POWERED || whe_tlm_ptr->whe_sbc_state == SBC_OFF){
+       
+       //if temperature is too high
+       if(whe_tlm_ptr->whe_temp >= g_TC_AppData.ThresholdTemps.NeedsCooling_Inactive){
+           if(whe_tlm_ptr->whe_louver == LOUVER_CLOSE){
+               CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_LOUVER_OPEN_CC);
+               CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+               CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+           }
+       }
+
+       //if temperature is hot enough
+       if(whe_tlm_ptr->whe_temp >= g_TC_AppData.ThresholdTemps.HotEnough_Inactive){
+           if(whe_tlm_ptr->whe_htr == HTR_ON){
+               CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_HTR_OFF_CC);
+               CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+               CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+           }
+       }
+
+       //if temperature is cool enough
+       if(whe_tlm_ptr->whe_temp < g_TC_AppData.ThresholdTemps.CoolEnough_Inactive){
+           if(whe_tlm_ptr->whe_louver == LOUVER_OPEN){
+               CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_LOUVER_CLOSE_CC);
+               CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+               CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+           }
+       }
+
+       //if temperature is too low
+       if(whe_tlm_ptr->whe_temp <= g_TC_AppData.ThresholdTemps.NeedsHeating_Inactive){
+           if(whe_tlm_ptr->whe_htr == HTR_OFF){
+               CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_HTR_ON_CC);
+               CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+               CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+           }
+       }
+   }
+   //if the instrument is active (observing)
+   else if(whe_tlm_ptr->whe_sbc_state == SBC_OBSERVING){
+       
+       //if temperature is too high
+       if(whe_tlm_ptr->whe_temp >= g_TC_AppData.ThresholdTemps.NeedsCooling_Active){
+           if(whe_tlm_ptr->whe_louver == LOUVER_CLOSE){
+               CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_LOUVER_OPEN_CC);
+               CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+               CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+           }
+       }
+
+       //if temperature is hot enough
+       if(whe_tlm_ptr->whe_temp >= g_TC_AppData.ThresholdTemps.HotEnough_Active){
+           if(whe_tlm_ptr->whe_htr == HTR_ON){
+               CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_HTR_OFF_CC);
+               CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+               CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+           }
+       }
+
+       //if temperature is cool enough
+       if(whe_tlm_ptr->whe_temp < g_TC_AppData.ThresholdTemps.CoolEnough_Active){
+           if(whe_tlm_ptr->whe_louver == LOUVER_OPEN){
+               CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_LOUVER_CLOSE_CC);
+               CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+               CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+           }
+       }
+
+       //if temperature is too low
+       if(whe_tlm_ptr->whe_temp <= g_TC_AppData.ThresholdTemps.NeedsHeating_Active){
+           if(whe_tlm_ptr->whe_htr == HTR_OFF){
+               CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_HTR_ON_CC);
+               CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+               CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+           }
        }
    }
 
-   if(whe_tlm_ptr->whe_temp < 20 && (whe_tlm_ptr->whe_sbc_state == 1 || whe_tlm_ptr->whe_sbc_state == 0)){
-       if(whe_tlm_ptr->whe_louver == 0){
-           CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_LOUVER_CLOSE_CC);
-           CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
-           CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
-       }
-   }
-
-
-   if(whe_tlm_ptr->whe_temp < 15 && (whe_tlm_ptr->whe_sbc_state == 1 || whe_tlm_ptr->whe_sbc_state == 2)){
-       if(whe_tlm_ptr->whe_louver == 1){
-           CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_LOUVER_OPEN_CC);
-           CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
-           CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
-       }
-       if(whe_tlm_ptr->whe_htr == 1){
-           CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_HTR_OFF_CC);
-           CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
-           CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
-       }
-   }
-
-	
-   if(whe_tlm_ptr->whe_temp > 25 && (whe_tlm_ptr->whe_sbc_state == 1 || whe_tlm_ptr->whe_sbc_state == 2)){
-       if(whe_tlm_ptr->whe_louver == 0){
-           CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_LOUVER_OPEN_CC);
-           CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
-           CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
-       }
-       if(whe_tlm_ptr->whe_htr == 0){
-           CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_HTR_OFF_CC);
-           CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
-           CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
-       }
-   }
-
-      if(whe_tlm_ptr->whe_temp <= 5 && (whe_tlm_ptr->whe_sbc_state == 0 )){
-       if(whe_tlm_ptr->whe_louver == 1){
-           CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_LOUVER_OPEN_CC);
-           CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
-           CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
-       }
-       if(whe_tlm_ptr->whe_htr == 1){
-           CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_HTR_OFF_CC);
-           CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
-           CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
-       }
-   }
-
-	
-   if(whe_tlm_ptr->whe_temp >= 40 && (whe_tlm_ptr->whe_sbc_state == 0)){
-       if(whe_tlm_ptr->whe_louver == 0){
-           CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_LOUVER_OPEN_CC);
-           CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
-           CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
-       }
-       if(whe_tlm_ptr->whe_htr == 0){
-           CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_HTR_OFF_CC);
-           CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
-           CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
-       }
-   }\
 /*
    if(tlmDebug == 5){
        CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd, WHE_THERM_HTR_ON_CC);

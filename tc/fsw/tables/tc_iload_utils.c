@@ -271,6 +271,15 @@ void TC_ProcessNewILoadTbl()
     **    g_TC_AppData.latest_sParam = g_TC_AppData.ILoadTblPtr->sParam;
     **    g_TC_AppData.latest_fParam = g_TC.AppData.ILoadTblPtr->fParam;
     */
+    g_TC_AppData.ThresholdTemps.NeedsCooling_Active = g_TC_AppData.ILoadTblPtr->NeedsCooling_Active;
+    g_TC_AppData.ThresholdTemps.CoolEnough_Active = g_TC_AppData.ILoadTblPtr->CoolEnough_Active;
+    g_TC_AppData.ThresholdTemps.HotEnough_Active = g_TC_AppData.ILoadTblPtr->HotEnough_Active;
+    g_TC_AppData.ThresholdTemps.NeedsHeating_Active = g_TC_AppData.ILoadTblPtr->NeedsHeating_Active;
+    g_TC_AppData.ThresholdTemps.NeedsCooling_Inactive = g_TC_AppData.ILoadTblPtr->NeedsCooling_Inactive;
+    g_TC_AppData.ThresholdTemps.CoolEnough_Inactive = g_TC_AppData.ILoadTblPtr->CoolEnough_Inactive;
+    g_TC_AppData.ThresholdTemps.HotEnough_Inactive = g_TC_AppData.ILoadTblPtr->HotEnough_Inactive;
+    g_TC_AppData.ThresholdTemps.NeedsHeating_Inactive = g_TC_AppData.ILoadTblPtr->NeedsHeating_Inactive;
+    
 }
     
 /*=======================================================================================

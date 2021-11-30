@@ -69,8 +69,6 @@ TC_ILoadTblEntry_t TC_ILoadDefTbl[TC_ILOAD_MAX_ENTRIES] =
 {
     /* Entry 1 */
     {
-        .iParam = 123
-
         /* TODO:  Add default values for ILoad parameters here.
         **
         ** Examples: (See example of type declarations in tc_tbldefs.h)
@@ -95,6 +93,15 @@ TC_ILoadTblEntry_t TC_ILoadDefTbl[TC_ILOAD_MAX_ENTRIES] =
         **    .dParam = 123.456789,
         **    .dParams = {-123.456789, 0.0, 123.456789}
         */
+
+        .NeedsCooling_Active = 25,
+        .CoolEnough_Active = 20,
+        .HotEnough_Active = 20,
+        .NeedsHeating_Active = 15,
+        .NeedsCooling_Inactive = 40,
+        .CoolEnough_Inactive = 20,
+        .HotEnough_Inactive = 20,
+        .NeedsHeating_Inactive = 5
     }
 };
 

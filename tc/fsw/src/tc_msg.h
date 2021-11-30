@@ -39,6 +39,8 @@
 */
 #define TC_NOOP_CC                 0
 #define TC_RESET_CC                1
+#define TC_ENABLE_LOGGING          2
+
 
 /*
 ** Local Structure Declarations

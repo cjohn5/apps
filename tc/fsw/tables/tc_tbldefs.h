@@ -44,8 +44,6 @@
 /* Definition for Iload table entry */
 typedef struct
 {
-    int32  iParam;
-
     /* TODO:  Add type declaration for ILoad parameters here.
     **
     ** Examples:
@@ -70,6 +68,15 @@ typedef struct
     **    double  dParam;
     **    double  dParams[3];
     */
+
+    int16     NeedsCooling_Active;
+    int16     CoolEnough_Active;
+    int16     HotEnough_Active;
+    int16     NeedsHeating_Active;
+    int16     NeedsCooling_Inactive;
+    int16     CoolEnough_Inactive;
+    int16     HotEnough_Inactive;
+    int16     NeedsHeating_Inactive;
 } TC_ILoadTblEntry_t;
     
 /*

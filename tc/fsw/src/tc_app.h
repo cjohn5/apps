@@ -77,6 +77,7 @@ typedef struct
     /* ILoad table-related */
     CFE_TBL_Handle_t  ILoadTblHdl;
     TC_ILoadTblEntry_t*  ILoadTblPtr;
+    TC_ILoadTblEntry_t ThresholdTemps;
     
     /* Input data - from I/O devices or subscribed from other apps' output data.
        Data structure should be defined in tc/fsw/src/tc_private_types.h */
