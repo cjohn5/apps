@@ -22,6 +22,8 @@ Follow the readme and deployment guide ~/cfs/docs/cFS Deployment Guide.pdf:<br/>
 ```
 cd ~/cfs/apps
 git pull
+cd ~/cfs_demo/config/targets
+git pull
 ```
 Note: you may need to run `git checkout .` to discard changes
 
