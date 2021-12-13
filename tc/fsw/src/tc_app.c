@@ -66,6 +66,7 @@
 TC_AppData_t  g_TC_AppData;
 int tlmDebug = 0;
 
+
 /*
 ** Local Variables
 */
@@ -143,7 +144,6 @@ int32 TC_InitEvent()
     {
         CFE_ES_WriteToSysLog("TC - Failed to register with EVS (0x%08X)\n", iStatus);
     }
-
     return (iStatus);
 }
     

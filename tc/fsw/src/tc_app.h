@@ -57,7 +57,7 @@
 #define TC_LOG_INFO    1
 #define TC_LOG_WARNING 2
 #define TC_LOG_ERROR   3
-#define TC_LOG_DEFAULT_STATE TC_LOG_WARNING
+#define TC_LOG_DEFAULT_STATE TC_LOG_DEBUG
 /*
 ** Local Structure Declarations
 */
