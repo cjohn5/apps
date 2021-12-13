@@ -57,5 +57,6 @@ ruby Launcher
 cd ~/cfs_demo/config
 rm targets -r -f
 git clone https://github.com/rnstoddard/COSMOS.git targets
+cp ~/cfs_demo/config/targets/tlm_viewer.txt ~/cfs_demo/config/tools/tlm_viewer/tlm_viewer.txt
 ```
 (TODO)
