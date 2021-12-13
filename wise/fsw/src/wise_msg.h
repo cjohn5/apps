@@ -72,7 +72,7 @@ typedef struct
     uint16				wiseHtrB_State;
     uint16				wiseLvrA_State;
     uint16				wiseLvrB_State;
-    uint16              wiseSSR_Count;
+    uint16                              wiseSSR_Count;
     int16				wiseTemp;
 } WISE_HkTlm_t;
 

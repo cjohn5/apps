@@ -102,6 +102,7 @@ typedef struct
     TC_HkTlm_t  HkTlm;
 
     whe_cmd_val_pipe whe_cmd;
+    wise_cmd_val_pipe wise_cmd;
 
     /* TODO:  Add declarations for additional private data here */
 } TC_AppData_t;
