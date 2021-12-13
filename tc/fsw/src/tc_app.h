@@ -137,6 +137,8 @@ void  TC_ProcessNewData(void);
 void  TC_ProcessNewCmds(void);
 void  TC_ProcessNewAppCmds(CFE_SB_Msg_t*);
 
+void TC_ProcessWiseTlm(void* TlmMsgPtr);
+
 void  TC_ReportHousekeeping(void);
 void  TC_SendOutData(void);
 

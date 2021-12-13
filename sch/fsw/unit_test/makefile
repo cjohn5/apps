@@ -20,13 +20,15 @@
 # by setting it to TRUE.  For example "make ENABLE_GCOV=TRUE".
 #
 
+UT_ASSERT_SRC= home/fsw/cfs/tools/ut_assert
+
 #
 # VPATH specifies the search paths for source files outside of the current directory.  Note that
 # all object files will be created in the current directory even if the source file is not in the 
 # current directory.
 #
 VPATH := .
-VPATH += $(UT_ASSERT_SRC)/src
+VPATH += home/fsw/cfs/tools/ut_assert
 VPATH += $(CFS_MISSION)/apps/cfs_lib/fsw/src
 VPATH += ../src
 VPATH += ../for_build

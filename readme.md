@@ -42,6 +42,15 @@ make clean
 make
 ```
 
+## Run the Unit Tests
+```
+cd ~/cfs/apps/tc/fsw/unit_test
+make clean
+make
+make run
+```
+Then review the outputs section for a list of tests that succeeded or failed.
+
 ## Run the Application:
 ```
 cd ~/cfs/build/cpu1/exe
