@@ -939,7 +939,7 @@ void TC_ProcessWiseTlm(void* TlmMsgPtr){
     int heater_off_state;
     int heater_on_state;
 
-    switch (get_num_louvers_stuck_open())
+    switch (get_louvers_stuck_open())
     {
         case TC_LVR_STUCK_OPEN_A_ONLY:
             // NOTE, the heater will have reduced performance due to a louver counteracting it
