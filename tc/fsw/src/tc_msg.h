@@ -50,8 +50,8 @@ typedef struct
     uint8              TlmHeader[CFE_SB_TLM_HDR_SIZE];
     uint8              usCmdCnt;
     uint8              usCmdErrCnt;
-    uint16	       WISE_Tlm_Packets_Rcvd;
-    uint8	       TCA_Current_State;
+    uint16	           WISE_Tlm_Packets_Rcvd;
+    uint8	           TCA_Current_State;
     uint8              TCA_Logging_State;
 
 } TC_HkTlm_t;
