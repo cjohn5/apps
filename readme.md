@@ -33,6 +33,11 @@ cp ~/cfs/apps/tc/fsw/platform_inc/tc_msgids.h ~/cfs/build/cpu1/inc/
 cp ~/cfs/apps/tc/fsw/tables/tc_tbldefs.h ~/cfs/build/cpu1/inc/
 cp ~/cfs/apps/whe/fsw/src/whe_msg.h ~/cfs/build/cpu1/inc/
 cp ~/cfs/apps/whe/fsw/src/whe.h ~/cfs/build/cpu1/inc/
+cp ~/cfs/apps/wise/fsw/src/wise_app.h ~/cfs/build/cpu1/inc/
+cp ~/cfs/apps/wise/fsw/src/wise_msg.h ~/cfs/build/cpu1/inc/
+cp ~/cfs/apps/wise/fsw/src/wise_private_ids.h ~/cfs/build/cpu1/inc/
+cp ~/cfs/apps/wise/fsw/src/wise_private_types.h ~/cfs/build/cpu1/inc/
+cp -a ~/cfs/apps/wise/fsw/mission_inc/. ~/cfs/build/mission_inc/
 cp ~/cfs/apps/to_lab/fsw/platform_inc/to_lab_sub_table.h ~/cfs/build/cpu1/inc/
 cd ~/cfs
 . ./setvars.sh
