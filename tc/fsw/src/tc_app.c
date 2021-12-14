@@ -55,15 +55,6 @@
 ** Local Defines
 */
 #define WISE_CMD_PARAM_PAINT_VALUE 0xAABB
-#define TC_HEAT_OFF 0
-#define TC_HEAT_NORMAL 1
-#define TC_HEAT_FAST 2
-
-#define TC_LVR_STUCK_OPEN_NONE 0
-#define TC_LVR_STUCK_OPEN_A_ONLY 1
-#define TC_LVR_STUCK_OPEN_B_ONLY 2
-#define TC_LVR_STUCK_OPEN_BOTH 3
-
 
 /*
 ** Local Structure Declarations
@@ -427,6 +418,8 @@ int32 TC_InitApp()
     int32  iStatus=CFE_SUCCESS;
 
     g_TC_AppData.uiRunStatus = CFE_ES_APP_RUN;
+    g_TC_AppData.last_sent_command_actuator = TC_CMD_NOT_SENT;
+    g_TC_AppData.last_sent_command_value = TC_VALUE_NOT_SENT;
 
     iStatus = CFE_ES_RegisterApp();
     if (iStatus != CFE_SUCCESS)
@@ -805,6 +798,9 @@ void send_WISE_Command(int CommandCode, int cmd_to_state)
 //assumes the tlm object is good
 void send_WISE_Heater_Command(int cmd_to_state)
 {
+    g_TC_AppData.last_sent_command_actuator = TC_ACTUATOR_HEATER;
+    g_TC_AppData.last_sent_command_value = cmd_to_state;
+
     if(wise_tlm_ptr == NULL)
     {
         CFE_ES_WriteToSysLog("ERROR_TC: Unable to determine heater states, WISE TLM not current");
@@ -840,7 +836,8 @@ void send_WISE_Heater_Command(int cmd_to_state)
 //assumes that the local state variables have been updated prior to calling this command
 void send_WISE_Louver_Command(int cmd_to_state)
 {
-    //not able to determine if the louver is stuck open or stuck closed?
+    g_TC_AppData.last_sent_command_actuator = TC_ACTUATOR_LOUVER;
+    g_TC_AppData.last_sent_command_value = cmd_to_state;
 
     if(wise_tlm_ptr == NULL)
     {
@@ -850,7 +847,7 @@ void send_WISE_Louver_Command(int cmd_to_state)
    
     switch (cmd_to_state)
     {
-        case WISE_LVR_OPEN:
+        case TC_COOL_ON:
             if(wise_tlm_ptr->wiseLvrA_State == WISE_LVR_OPEN || wise_tlm_ptr->wiseLvrB_State == WISE_LVR_OPEN)
             {
                 CFE_ES_WriteToSysLog("DEBUG_TC: Commanding louver open - already open");
@@ -873,7 +870,7 @@ void send_WISE_Louver_Command(int cmd_to_state)
             }
             break;
 
-        case WISE_LVR_CLOSED:
+        case TC_COOL_OFF:
             CFE_ES_WriteToSysLog("DEBUG_TC: Commanding louvers closed");
 
             if(wise_tlm_ptr->wiseLvrA_State == WISE_LVR_CLOSED && wise_tlm_ptr->wiseLvrB_State == WISE_LVR_CLOSED)
@@ -1009,7 +1006,7 @@ void TC_ProcessWiseTlm(void* TlmMsgPtr){
                }
                g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_COOLING;
 
-               send_WISE_Louver_Command(WISE_LVR_OPEN);
+               send_WISE_Louver_Command(TC_COOL_ON);
                if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_INFO){
                   CFE_ES_WriteToSysLog("INFO_TC: Commanded Louver Open, entering COOLING state");
                }
@@ -1033,7 +1030,7 @@ void TC_ProcessWiseTlm(void* TlmMsgPtr){
            if(wise_tlm_ptr->wiseLvrA_State == WISE_LVR_OPEN){
                g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_MONITORING;
 
-               send_WISE_Louver_Command(WISE_LVR_CLOSED);
+               send_WISE_Louver_Command(TC_COOL_OFF);
                if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_INFO){
                   CFE_ES_WriteToSysLog("INFO_TC: Commanded Louver Closed, entering MONITORING state");
                }
@@ -1076,7 +1073,7 @@ void TC_ProcessWiseTlm(void* TlmMsgPtr){
                }
                g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_COOLING;
 
-               send_WISE_Louver_Command(WISE_LVR_OPEN);
+               send_WISE_Louver_Command(TC_COOL_ON);
                if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_INFO){
                   CFE_ES_WriteToSysLog("INFO_TC: Commanded Louver Open, entering COOLING state");
                }
@@ -1100,7 +1097,7 @@ void TC_ProcessWiseTlm(void* TlmMsgPtr){
            if(wise_tlm_ptr->wiseLvrA_State == WISE_LVR_OPEN){
                g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_MONITORING;
 
-               send_WISE_Louver_Command(WISE_LVR_CLOSED);
+               send_WISE_Louver_Command(TC_COOL_OFF);
                if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_INFO){
                   CFE_ES_WriteToSysLog("INFO_TC: Commanded Louver Closed, entering MONITORING state");
                }

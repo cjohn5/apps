@@ -59,6 +59,25 @@
 #define TC_LOG_WARNING 2
 #define TC_LOG_ERROR   3
 #define TC_LOG_DEFAULT_STATE TC_LOG_DEBUG
+
+#define TC_HEAT_OFF 0
+#define TC_HEAT_NORMAL 1
+#define TC_HEAT_FAST 2
+
+#define TC_COOL_OFF 0
+#define TC_COOL_ON 1
+
+#define TC_LVR_STUCK_OPEN_NONE 0
+#define TC_LVR_STUCK_OPEN_A_ONLY 1
+#define TC_LVR_STUCK_OPEN_B_ONLY 2
+#define TC_LVR_STUCK_OPEN_BOTH 3
+
+#define TC_CMD_NOT_SENT 0
+#define TC_ACTUATOR_HEATER 1
+#define TC_ACTUATOR_LOUVER 2
+
+#define TC_VALUE_NOT_SENT 99
+
 /*
 ** Local Structure Declarations
 */
@@ -106,6 +125,8 @@ typedef struct
     wise_cmd_val_pipe wise_cmd;
 
     /* TODO:  Add declarations for additional private data here */
+    int last_sent_command_actuator;
+    int last_sent_command_value;
 } TC_AppData_t;
 
 /*

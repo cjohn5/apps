@@ -112,7 +112,7 @@ void TC_Algorithm_Test_Given_WiseError_ShouldPlace_TC_Into_ErrorMode(void)
     log_TCA_State(g_TC_AppData.HkTlm.TCA_Current_State);
     UtAssert_True (g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_ERROR, "TCA_Current_State == ERROR");
 
-} /* end TC_Algorithm_Test_Needs_Heating */
+} /* end TC_Algorithm_Test_Given_WiseError_ShouldPlace_TC_Into_ErrorMode */
 
 void TC_Algorithm_Test_Needs_Heating_Inactive(void)
 {
@@ -134,13 +134,9 @@ void TC_Algorithm_Test_Needs_Heating_Inactive(void)
     
     log_TCA_State(g_TC_AppData.HkTlm.TCA_Current_State);
     UtAssert_True (g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_HEATING, "TCA_Current_State == HEATING");
-    uiCmdCode = CFE_SB_GetCmdCode(&g_TC_AppData.wise_cmd);
+    UtAssert_True (g_TC_AppData.last_sent_command_actuator == TC_ACTUATOR_HEATER && g_TC_AppData.last_sent_command_value == TC_HEAT_NORMAL, "last sent command set heaters to normal (1 heater)");
 
-    //TODO: WISE uses parameterized commands instead of basic commands
-    log_CC_Code(uiCmdCode, 99);
-    UtAssert_True (uiCmdCode == WISE_HTR_TOGGLE_CC, "last sent command code == TOGGLE HEATER");
-
-} /* end TC_Algorithm_Test_Needs_Heating */
+} /* end TC_Algorithm_Test_Needs_Heating_Inactive */
 
 void TC_Algorithm_Test_Needs_Heating_Active(void)
 {
@@ -164,13 +160,9 @@ void TC_Algorithm_Test_Needs_Heating_Active(void)
     
     log_TCA_State(g_TC_AppData.HkTlm.TCA_Current_State);
     UtAssert_True (g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_HEATING, "TCA_Current_State == HEATING");
-    uiCmdCode = CFE_SB_GetCmdCode(&g_TC_AppData.wise_cmd);
+    UtAssert_True (g_TC_AppData.last_sent_command_actuator == TC_ACTUATOR_HEATER && g_TC_AppData.last_sent_command_value == TC_HEAT_NORMAL, "last sent command set heaters to normal (1 heater)");
 
-    //TODO: WISE uses parameterized commands instead of basic commands
-    log_CC_Code(uiCmdCode, 99);
-    UtAssert_True (uiCmdCode == WISE_HTR_TOGGLE_CC, "last sent command code == TOGGLE HEATER");
-
-} /* end TC_Algorithm_Test_Needs_Heating */
+} /* end TC_Algorithm_Test_Needs_Heating_Active */
 
 
 
@@ -206,13 +198,8 @@ void TC_Algorithm_Test_Needs_Cooling_Inactive(void)
     
     log_TCA_State(g_TC_AppData.HkTlm.TCA_Current_State);
     UtAssert_True (g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_COOLING, "TCA_Current_State == COOLING");
-    uiCmdCode = CFE_SB_GetCmdCode(&g_TC_AppData.wise_cmd);
-
-    //TODO: WISE uses parameterized commands instead of basic commands
-    log_CC_Code(uiCmdCode, 99);
-    UtAssert_True (uiCmdCode == WISE_LVR_TOGGLE_CC, "last sent command code == TOGGLE LOUVER");
-
-} /* end TC_Algorithm_Test_Needs_Heating */
+    UtAssert_True (g_TC_AppData.last_sent_command_actuator == TC_ACTUATOR_LOUVER && g_TC_AppData.last_sent_command_value == TC_COOL_ON, "last sent command set louver to on");
+} /* end TC_Algorithm_Test_Needs_Cooling_Inactive */
 
 void TC_Algorithm_Test_Needs_Cooling_Inactive_Temp40(void)
 {
@@ -238,13 +225,8 @@ void TC_Algorithm_Test_Needs_Cooling_Inactive_Temp40(void)
     
     log_TCA_State(g_TC_AppData.HkTlm.TCA_Current_State);
     UtAssert_True (g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_COOLING, "TCA_Current_State == COOLING");
-    uiCmdCode = CFE_SB_GetCmdCode(&g_TC_AppData.wise_cmd);
-
-    //TODO: WISE uses parameterized commands instead of basic commands
-    log_CC_Code(uiCmdCode, 99);
-    UtAssert_True (uiCmdCode == WISE_LVR_TOGGLE_CC, "last sent command code == TOGGLE LOUVER");
-
-} /* end TC_Algorithm_Test_Needs_Heating */
+    UtAssert_True (g_TC_AppData.last_sent_command_actuator == TC_ACTUATOR_LOUVER && g_TC_AppData.last_sent_command_value == TC_COOL_ON, "last sent command set louver to on");
+} /* end TC_Algorithm_Test_Needs_Cooling_Inactive_Temp40 */
 
 void TC_Algorithm_Test_Needs_Cooling_Active_Temp25(void)
 {
@@ -270,13 +252,9 @@ void TC_Algorithm_Test_Needs_Cooling_Active_Temp25(void)
     
     log_TCA_State(g_TC_AppData.HkTlm.TCA_Current_State);
     UtAssert_True (g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_COOLING, "TCA_Current_State == COOLING");
-    uiCmdCode = CFE_SB_GetCmdCode(&g_TC_AppData.wise_cmd);
+    UtAssert_True (g_TC_AppData.last_sent_command_actuator == TC_ACTUATOR_LOUVER && g_TC_AppData.last_sent_command_value == TC_COOL_ON, "last sent command set louver to on");
 
-    //TODO: WISE uses parameterized commands instead of basic commands
-    log_CC_Code(uiCmdCode, 99);
-    UtAssert_True (uiCmdCode == WISE_LVR_TOGGLE_CC, "last sent command code == TOGGLE LOUVER");
-
-} /* end TC_Algorithm_Test_Needs_Heating */
+} /* end TC_Algorithm_Test_Needs_Cooling_Active_Temp25 */
 
 void TC_Algorithm_Test_Needs_Heating_Active_Temp15(void)
 {
@@ -302,13 +280,8 @@ void TC_Algorithm_Test_Needs_Heating_Active_Temp15(void)
     
     log_TCA_State(g_TC_AppData.HkTlm.TCA_Current_State);
     UtAssert_True (g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_HEATING, "TCA_Current_State == HEATING");
-    uiCmdCode = CFE_SB_GetCmdCode(&g_TC_AppData.wise_cmd);
-
-    //TODO: WISE uses parameterized commands instead of basic commands
-    log_CC_Code(uiCmdCode, 99);
-    UtAssert_True (uiCmdCode == WISE_LVR_TOGGLE_CC, "last sent command code == TOGGLE LOUVER");
-
-} /* end TC_Algorithm_Test_Needs_Heating */
+    UtAssert_True (g_TC_AppData.last_sent_command_actuator == TC_ACTUATOR_HEATER && g_TC_AppData.last_sent_command_value == TC_HEAT_NORMAL, "last sent command set heater to on");
+} /* end TC_Algorithm_Test_Needs_Heating_Active_Temp15 */
 
 void TC_Algorithm_Test_Needs_Heating_Inactive_Temp5(void)
 {
@@ -334,13 +307,9 @@ void TC_Algorithm_Test_Needs_Heating_Inactive_Temp5(void)
     
     log_TCA_State(g_TC_AppData.HkTlm.TCA_Current_State);
     UtAssert_True (g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_HEATING, "TCA_Current_State == HEATING");
-    uiCmdCode = CFE_SB_GetCmdCode(&g_TC_AppData.wise_cmd);
+    UtAssert_True (g_TC_AppData.last_sent_command_actuator == TC_ACTUATOR_HEATER && g_TC_AppData.last_sent_command_value == TC_HEAT_NORMAL, "last sent command set heaters to normal (1 heater)");
 
-    //TODO: WISE uses parameterized commands instead of basic commands
-    log_CC_Code(uiCmdCode, 99);
-    UtAssert_True (uiCmdCode == WISE_LVR_TOGGLE_CC, "last sent command code == TOGGLE LOUVER");
-
-} /* end TC_Algorithm_Test_Needs_Heating */
+} /* end TC_Algorithm_Test_Needs_Heating_Inactive_Temp5 */
 
 void TC_Algorithm_Test_Needs_Cooling_Active(void)
 {
@@ -362,13 +331,8 @@ void TC_Algorithm_Test_Needs_Cooling_Active(void)
     
     log_TCA_State(g_TC_AppData.HkTlm.TCA_Current_State);
     UtAssert_True (g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_COOLING, "TCA_Current_State == COOLING");
-    uiCmdCode = CFE_SB_GetCmdCode(&g_TC_AppData.wise_cmd);
-
-    //TODO: WISE uses parameterized commands instead of basic commands
-    log_CC_Code(uiCmdCode, 99);
-    UtAssert_True (uiCmdCode == WISE_LVR_TOGGLE_CC, "last sent command code == TOGGLE LOUVER");
-
-}
+    UtAssert_True (g_TC_AppData.last_sent_command_actuator == TC_ACTUATOR_LOUVER && g_TC_AppData.last_sent_command_value == TC_COOL_ON, "last sent command set louvers to on");
+}// end TC_Algorithm_Test_Needs_Cooling_Active
 
 void TC_App_Test_AddTestCases(void)
 {
