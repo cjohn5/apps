@@ -27,7 +27,7 @@
 ** Include Files
 */
 
- 
+#include "wise_msg.h"
 #include "tc_iload_utils.h"
 
 /*
@@ -62,11 +62,7 @@ typedef struct
 
 } whe_cmd_val_pipe;
 
-typedef struct
-{
-    uint8 	      CmdHeader[CFE_SB_CMD_HDR_SIZE];
-
-} wise_cmd_val_pipe;
+typedef WISE_ParmCmd_t wise_cmd_val_pipe;
 
 typedef struct
 {

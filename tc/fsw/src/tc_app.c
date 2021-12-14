@@ -54,6 +54,16 @@
 /*
 ** Local Defines
 */
+#define WISE_CMD_PARAM_PAINT_VALUE 0xAABB
+#define TC_HEAT_OFF 0
+#define TC_HEAT_NORMAL 1
+#define TC_HEAT_FAST 2
+
+#define TC_LVR_STUCK_OPEN_NONE 0
+#define TC_LVR_STUCK_OPEN_A_ONLY 1
+#define TC_LVR_STUCK_OPEN_B_ONLY 2
+#define TC_LVR_STUCK_OPEN_BOTH 3
+
 
 /*
 ** Local Structure Declarations
@@ -62,6 +72,9 @@
 /*
 ** External Global Variables
 */
+
+//this variable would be better provided as a TLM data member, but a change request to WISE would be needed
+extern uint8  gWiseLvrState[2];
 
 /*
 ** Global Variables
@@ -73,6 +86,7 @@ int tlmDebug = 0;
 /*
 ** Local Variables
 */
+WISE_HkTlm_t* wise_tlm_ptr = NULL;
 
 /*
 ** Local Function Definitions
@@ -600,6 +614,7 @@ int32 TC_RcvMsg(int32 iBlocking)
     return (iStatus);
 }
 
+
 void TC_ProcessWheTlm(void* TlmMsgPtr){
    whe_hk_tlm_t* whe_tlm_ptr = (whe_hk_tlm_t*)TlmMsgPtr;
    g_TC_AppData.HkTlm.WISE_Tlm_Packets_Rcvd++;
@@ -779,11 +794,183 @@ void TC_ProcessWheTlm(void* TlmMsgPtr){
    }
 }
 
+void send_WISE_Command(int CommandCode, int cmd_to_state)
+{
+    g_TC_AppData.wise_cmd.target = cmd_to_state;
+    CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd, CommandCode);
+    CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+    CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.whe_cmd);
+}
+
+//assumes the tlm object is good
+void send_WISE_Heater_Command(int cmd_to_state)
+{
+    if(wise_tlm_ptr == NULL)
+    {
+        CFE_ES_WriteToSysLog("ERROR_TC: Unable to determine heater states, WISE TLM not current");
+        return;
+    }
+   
+    switch (cmd_to_state)
+    {
+        case TC_HEAT_OFF:
+            CFE_ES_WriteToSysLog("DEBUG_TC: Commanding heaters off");
+            if(wise_tlm_ptr->wiseHtrA_State == WISE_HTR_ON) send_WISE_Command(WISE_HTR_TOGGLE_CC, WISE_HTR_A);
+            if(wise_tlm_ptr->wiseHtrB_State == WISE_HTR_ON) send_WISE_Command(WISE_HTR_TOGGLE_CC, WISE_HTR_B);
+            break;
+
+        case TC_HEAT_NORMAL:
+            CFE_ES_WriteToSysLog("DEBUG_TC: Commanding heater A on");
+            if(wise_tlm_ptr->wiseHtrA_State == WISE_HTR_OFF) send_WISE_Command(WISE_HTR_TOGGLE_CC, WISE_HTR_A);
+            if(wise_tlm_ptr->wiseHtrB_State == WISE_HTR_ON) send_WISE_Command(WISE_HTR_TOGGLE_CC, WISE_HTR_B);
+            break;
+
+        case TC_HEAT_FAST:
+            CFE_ES_WriteToSysLog("DEBUG_TC: Commanding both heaters on");
+            if(wise_tlm_ptr->wiseHtrA_State == WISE_HTR_OFF) send_WISE_Command(WISE_HTR_TOGGLE_CC, WISE_HTR_A);
+            if(wise_tlm_ptr->wiseHtrB_State == WISE_HTR_OFF) send_WISE_Command(WISE_HTR_TOGGLE_CC, WISE_HTR_B);
+            break;
+
+        default:
+            CFE_ES_WriteToSysLog("ERROR_TC: Invalid heater command requested");
+            break;
+    }
+}
+
+//assumes that the local state variables have been updated prior to calling this command
+void send_WISE_Louver_Command(int cmd_to_state)
+{
+    //not able to determine if the louver is stuck open or stuck closed?
+
+    if(wise_tlm_ptr == NULL)
+    {
+        CFE_ES_WriteToSysLog("ERROR_TC: Unable to determine louver states, WISE TLM not current");
+        return;
+    }
+   
+    switch (cmd_to_state)
+    {
+        case WISE_LVR_OPEN:
+            if(wise_tlm_ptr->wiseLvrA_State == WISE_LVR_OPEN || wise_tlm_ptr->wiseLvrB_State == WISE_LVR_OPEN)
+            {
+                CFE_ES_WriteToSysLog("DEBUG_TC: Commanding louver open - already open");
+                return; // a louver is already open
+            }
+
+            if (gWiseLvrStuck[WISE_LVR_A] == 0) //A is able to be commanded
+            {
+                CFE_ES_WriteToSysLog("DEBUG_TC: Commanding louver A open");
+                send_WISE_Command(WISE_LVR_TOGGLE_CC, WISE_LVR_A);
+            }
+            else if(gWiseLvrStuck[WISE_LVR_B] == 0) //B is able to be commanded
+            {
+                CFE_ES_WriteToSysLog("DEBUG_TC: Commanding louver B open");
+                send_WISE_Command(WISE_LVR_TOGGLE_CC, WISE_LVR_B);
+            }
+            else
+            {
+                CFE_ES_WriteToSysLog("WARNING_TC: Commanded louver to open, but both louvers are stuck!");
+            }
+            break;
+
+        case WISE_LVR_CLOSED:
+            CFE_ES_WriteToSysLog("DEBUG_TC: Commanding louvers closed");
+
+            if(wise_tlm_ptr->wiseLvrA_State == WISE_LVR_CLOSED && wise_tlm_ptr->wiseLvrB_State == WISE_LVR_CLOSED)
+            {
+                CFE_ES_WriteToSysLog("DEBUG_TC: Commanding louvers closed - already closed");
+                return; // a louver is already open
+            }
+
+            if(wise_tlm_ptr->wiseLvrA_State == WISE_LVR_OPEN)
+            {
+                if (gWiseLvrStuck[WISE_LVR_A] == 0) //A is able to be commanded
+                {
+                    CFE_ES_WriteToSysLog("DEBUG_TC: Commanding louver A closed");
+                    send_WISE_Command(WISE_LVR_TOGGLE_CC, WISE_LVR_A);
+                }
+                else
+                {
+                    CFE_ES_WriteToSysLog("WARNING_TC: Commanded louvers closed, but both louver A is stuck open!");
+                }
+            }
+            
+            if(wise_tlm_ptr->wiseLvrB_State == WISE_LVR_OPEN)
+            {
+                if (gWiseLvrStuck[WISE_LVR_B] == 0) //A is able to be commanded
+                {
+                    CFE_ES_WriteToSysLog("DEBUG_TC: Commanding louver B closed");
+                    send_WISE_Command(WISE_LVR_TOGGLE_CC, WISE_LVR_B);
+                }
+                else
+                {
+                    CFE_ES_WriteToSysLog("WARNING_TC: Commanded louvers closed, but both louver B is stuck open!");
+                }
+            }
+            break;
+
+        default:
+            CFE_ES_WriteToSysLog("ERROR_TC: Invalid louver command requested");
+            break;
+    }
+}
+
+int get_louvers_stuck_open()
+{
+    if(wise_tlm_ptr == NULL)
+    {
+        CFE_ES_WriteToSysLog("ERROR_TC: Unable to determine louver states, WISE TLM not current");
+        return;
+    }
+
+    boolean louver_A_stuck_open = (gWiseLvrStuck[WISE_LVR_A]==0 && wise_tlm_ptr->wiseLvrA_State == WISE_LVR_OPEN );
+    boolean louver_B_stuck_open = (gWiseLvrStuck[WISE_LVR_B]==0 && wise_tlm_ptr->wiseLvrB_State == WISE_LVR_OPEN );
+
+    if(louver_A_stuck_open && louver_A_stuck_open) return TC_LVR_STUCK_OPEN_BOTH;
+    if(louver_A_stuck_open) return TC_LVR_STUCK_OPEN_A_ONLY;
+    if(louver_A_stuck_open) return TC_LVR_STUCK_OPEN_B_ONLY;
+    return TC_LVR_STUCK_OPEN_NONE;     
+}
+
 void TC_ProcessWiseTlm(void* TlmMsgPtr){
-   WISE_HkTlm_t* wise_tlm_ptr = (WISE_HkTlm_t*)TlmMsgPtr;
+   wise_tlm_ptr = (WISE_HkTlm_t*)TlmMsgPtr;
    g_TC_AppData.HkTlm.WISE_Tlm_Packets_Rcvd++;
 
-//CFE_ES_WriteToSysLog("Temp is: %i, Heater state is: %i\n, Louver state is: %i", whe_tlm_ptr->whe_temp, whe_tlm_ptr->whe_htr, whe_tlm_ptr->whe_louver );
+    int heater_off_state;
+    int heater_on_state;
+
+    switch (get_num_louvers_stuck_open())
+    {
+        case TC_LVR_STUCK_OPEN_A_ONLY:
+            // NOTE, the heater will have reduced performance due to a louver counteracting it
+            heater_off_state = TC_HEAT_OFF;
+            heater_on_state = TC_HEAT_FAST;
+            break;
+
+        case TC_LVR_STUCK_OPEN_B_ONLY:
+            // NOTE, the heater will have reduced performance due to a louver counteracting it
+            heater_off_state = TC_HEAT_OFF;
+            heater_on_state = TC_HEAT_FAST;
+            break;
+
+        case TC_LVR_STUCK_OPEN_BOTH:
+            //NOTE, commanding to cool will be meaningless due to both devices having failed
+            heater_off_state = TC_HEAT_NORMAL; // 1 heater will balance out 2 failed louvers
+            heater_on_state = TC_HEAT_FAST;
+            break;
+
+        case TC_LVR_STUCK_OPEN_NONE:
+            heater_off_state = TC_HEAT_OFF;
+            heater_on_state = TC_HEAT_NORMAL;
+            break;
+
+        default:
+            CFE_ES_WriteToSysLog("WARNING_TC: Unrecognized number of louvers stuck open, using default heater settings");
+            heater_off_state = TC_HEAT_OFF;
+            heater_on_state = TC_HEAT_NORMAL;
+            break;
+
+    }
 
    if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_DEBUG){
       CFE_ES_WriteToSysLog("DEBUG_TC: TC-state=%i WISE-state=%i WISE-temp=%i WISE-heater=%i WISE-louver=%i WISE-numTLM=%i\n", 
@@ -822,9 +1009,7 @@ void TC_ProcessWiseTlm(void* TlmMsgPtr){
                }
                g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_COOLING;
 
-               CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd, WISE_LVR_TOGGLE_CC);
-               CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd);
-               CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd);
+               send_WISE_Louver_Command(WISE_LVR_OPEN);
                if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_INFO){
                   CFE_ES_WriteToSysLog("INFO_TC: Commanded Louver Open, entering COOLING state");
                }
@@ -836,9 +1021,7 @@ void TC_ProcessWiseTlm(void* TlmMsgPtr){
            if(wise_tlm_ptr->wiseHtrA_State == WISE_HTR_ON){
                g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_MONITORING;
 
-               CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd, WISE_HTR_TOGGLE_CC);
-               CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd);
-               CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd);
+               send_WISE_Heater_Command(heater_off_state);
                if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_INFO){
                   CFE_ES_WriteToSysLog("INFO_TC: Commanded Heater Off, entering MONITORING state");
                }
@@ -850,9 +1033,7 @@ void TC_ProcessWiseTlm(void* TlmMsgPtr){
            if(wise_tlm_ptr->wiseLvrA_State == WISE_LVR_OPEN){
                g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_MONITORING;
 
-               CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd, WISE_LVR_TOGGLE_CC);
-               CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd);
-               CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd);
+               send_WISE_Louver_Command(WISE_LVR_CLOSED);
                if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_INFO){
                   CFE_ES_WriteToSysLog("INFO_TC: Commanded Louver Closed, entering MONITORING state");
                }
@@ -872,9 +1053,7 @@ void TC_ProcessWiseTlm(void* TlmMsgPtr){
                }
                g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_HEATING;
 
-               CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd, WISE_HTR_TOGGLE_CC);
-               CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd);
-               CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd);
+               send_WISE_Heater_Command(heater_on_state);
                if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_INFO){
                   CFE_ES_WriteToSysLog("INFO_TC: Commanded Heater On, entering HEATING state");
                }
@@ -897,9 +1076,7 @@ void TC_ProcessWiseTlm(void* TlmMsgPtr){
                }
                g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_COOLING;
 
-               CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd, WISE_LVR_TOGGLE_CC);
-               CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd);
-               CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd);
+               send_WISE_Louver_Command(WISE_LVR_OPEN);
                if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_INFO){
                   CFE_ES_WriteToSysLog("INFO_TC: Commanded Louver Open, entering COOLING state");
                }
@@ -911,9 +1088,7 @@ void TC_ProcessWiseTlm(void* TlmMsgPtr){
            if(wise_tlm_ptr->wiseHtrA_State == WISE_HTR_ON){
                g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_MONITORING;
 
-               CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd, WISE_HTR_TOGGLE_CC);
-               CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd);
-               CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd);
+               send_WISE_Heater_Command(heater_off_state);
                if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_INFO){
                   CFE_ES_WriteToSysLog("INFO_TC: Commanded Heater Off, entering MONITORING state");
                }
@@ -925,9 +1100,7 @@ void TC_ProcessWiseTlm(void* TlmMsgPtr){
            if(wise_tlm_ptr->wiseLvrA_State == WISE_LVR_OPEN){
                g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_MONITORING;
 
-               CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd, WISE_LVR_TOGGLE_CC);
-               CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd);
-               CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd);
+               send_WISE_Louver_Command(WISE_LVR_CLOSED);
                if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_INFO){
                   CFE_ES_WriteToSysLog("INFO_TC: Commanded Louver Closed, entering MONITORING state");
                }
@@ -947,15 +1120,15 @@ void TC_ProcessWiseTlm(void* TlmMsgPtr){
                }
                g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_HEATING;
 
-               CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd, WISE_HTR_TOGGLE_CC);
-               CFE_SB_TimeStampMsg((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd);
-               CFE_SB_SendMsg((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd);
+               send_WISE_Heater_Command(heater_on_state);
                if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_INFO){
                   CFE_ES_WriteToSysLog("INFO_TC: Commanded Heater On, entering HEATING state");
                }
            }
        }
    }
+   //expire the tlm pointer
+   wise_tlm_ptr = NULL;
 }
     
 /*=====================================================================================
