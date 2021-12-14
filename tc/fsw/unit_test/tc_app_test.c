@@ -91,22 +91,14 @@ void log_TCA_State(uint8 state)
     }
 }
 
-void TC_Algorithm_Test_Needs_Heating(void)
+
+void TC_Algorithm_Test_Given_WiseError_ShouldPlace_TC_Into_ErrorMode(void)
 {
     //declare any needed local variables
     uint32  uiCmdCode=0;
     WISE_HkTlm_t  wise_tlm;
     
-    //set up any needed variables (global or local)
-        //Set the values of the mocked TLM packet to trigger the desired conditions
-        //Set SB to contain a received message on the TLM pipe with ID == WISE_HK_TLM_MID (containing the tlm mocked TLM packet)
-        //Set the TCA states to trigger the desired conditions
-    wise_tlm.wiseSbcState = WISE_SBC_POWERED;
-    wise_tlm.wiseTemp = g_TC_AppData.ThresholdTemps.NeedsHeating_Inactive - 5;
-    wise_tlm.wiseHtrA_State = WISE_HTR_OFF;
-    wise_tlm.wiseHtrB_State = WISE_HTR_OFF;
-    wise_tlm.wiseLvrA_State = WISE_LVR_CLOSED;
-    wise_tlm.wiseLvrB_State = WISE_LVR_CLOSED;
+    wise_tlm.wiseSbcState = WISE_SBC_ERROR;  
     g_TC_AppData.HkTlm.TCA_Logging_State = TC_LOG_DEBUG;
     g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_MONITORING;   
 
@@ -116,13 +108,31 @@ void TC_Algorithm_Test_Needs_Heating(void)
     /* Execute the function being tested */
     TC_ProcessWiseTlm(&wise_tlm);
     
-    /* Verify results */
-        //verify any expected event messages
-        //verify any expected variable changes
-        //verify correct number of event messages
     
     log_TCA_State(g_TC_AppData.HkTlm.TCA_Current_State);
-    printf("This is the actual state: %i defined\n", g_TC_AppData.HkTlm.TCA_Current_State);
+    UtAssert_True (g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_ERROR, "TCA_Current_State == ERROR");
+
+} /* end TC_Algorithm_Test_Needs_Heating */
+
+void TC_Algorithm_Test_Needs_Heating_Inactive(void)
+{
+    //declare any needed local variables
+    uint32  uiCmdCode=0;
+    WISE_HkTlm_t  wise_tlm;
+    
+    wise_tlm.wiseSbcState = WISE_SBC_POWERED;
+    wise_tlm.wiseTemp = g_TC_AppData.ThresholdTemps.NeedsHeating_Inactive - 5;
+    wise_tlm.wiseHtrA_State = WISE_HTR_OFF;
+    wise_tlm.wiseHtrB_State = WISE_HTR_OFF;
+    wise_tlm.wiseLvrA_State = WISE_LVR_CLOSED;
+    wise_tlm.wiseLvrB_State = WISE_LVR_CLOSED;
+    g_TC_AppData.HkTlm.TCA_Logging_State = TC_LOG_DEBUG;
+    g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_MONITORING;   
+    
+    /* Execute the function being tested */
+    TC_ProcessWiseTlm(&wise_tlm);
+    
+    log_TCA_State(g_TC_AppData.HkTlm.TCA_Current_State);
     UtAssert_True (g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_HEATING, "TCA_Current_State == HEATING");
     uiCmdCode = CFE_SB_GetCmdCode(&g_TC_AppData.wise_cmd);
 
@@ -132,7 +142,39 @@ void TC_Algorithm_Test_Needs_Heating(void)
 
 } /* end TC_Algorithm_Test_Needs_Heating */
 
-void TC_Algorithm_Test_Needs_Cooling(void)
+void TC_Algorithm_Test_Needs_Heating_Active(void)
+{
+    //declare any needed local variables
+    uint32  uiCmdCode=0;
+    WISE_HkTlm_t  wise_tlm;
+    
+    wise_tlm.wiseSbcState = WISE_SBC_POWERED;
+    wise_tlm.wiseTemp = g_TC_AppData.ThresholdTemps.NeedsHeating_Active - 5;
+    wise_tlm.wiseHtrA_State = WISE_HTR_OFF;
+    wise_tlm.wiseHtrB_State = WISE_HTR_OFF;
+    wise_tlm.wiseLvrA_State = WISE_LVR_CLOSED;
+    wise_tlm.wiseLvrB_State = WISE_LVR_CLOSED;
+    g_TC_AppData.HkTlm.TCA_Logging_State = TC_LOG_DEBUG;
+    g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_MONITORING;   
+
+    
+    /* Execute the function being tested */
+    TC_ProcessWiseTlm(&wise_tlm);
+
+    
+    log_TCA_State(g_TC_AppData.HkTlm.TCA_Current_State);
+    UtAssert_True (g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_HEATING, "TCA_Current_State == HEATING");
+    uiCmdCode = CFE_SB_GetCmdCode(&g_TC_AppData.wise_cmd);
+
+    //TODO: WISE uses parameterized commands instead of basic commands
+    log_CC_Code(uiCmdCode, 99);
+    UtAssert_True (uiCmdCode == WISE_HTR_TOGGLE_CC, "last sent command code == TOGGLE HEATER");
+
+} /* end TC_Algorithm_Test_Needs_Heating */
+
+
+
+void TC_Algorithm_Test_Needs_Cooling_Inactive(void)
 {
     //declare any needed local variables
     uint32  uiCmdCode=0;
@@ -172,11 +214,174 @@ void TC_Algorithm_Test_Needs_Cooling(void)
 
 } /* end TC_Algorithm_Test_Needs_Heating */
 
+void TC_Algorithm_Test_Needs_Cooling_Inactive_Temp40(void)
+{
+    //declare any needed local variables
+    uint32  uiCmdCode=0;
+    WISE_HkTlm_t  wise_tlm;
+    
+    wise_tlm.wiseSbcState = WISE_SBC_POWERED;
+    wise_tlm.wiseTemp = 40;
+    wise_tlm.wiseHtrA_State = WISE_HTR_OFF;
+    wise_tlm.wiseHtrB_State = WISE_HTR_OFF;
+    wise_tlm.wiseLvrA_State = WISE_LVR_CLOSED;
+    wise_tlm.wiseLvrB_State = WISE_LVR_CLOSED;
+    g_TC_AppData.HkTlm.TCA_Logging_State = TC_LOG_DEBUG;
+    g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_MONITORING;   
+
+    TC_ProcessWiseTlm(&wise_tlm);
+    
+    /* Verify results */
+        //verify any expected event messages
+        //verify any expected variable changes
+        //verify correct number of event messages
+    
+    log_TCA_State(g_TC_AppData.HkTlm.TCA_Current_State);
+    UtAssert_True (g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_COOLING, "TCA_Current_State == COOLING");
+    uiCmdCode = CFE_SB_GetCmdCode(&g_TC_AppData.wise_cmd);
+
+    //TODO: WISE uses parameterized commands instead of basic commands
+    log_CC_Code(uiCmdCode, 99);
+    UtAssert_True (uiCmdCode == WISE_LVR_TOGGLE_CC, "last sent command code == TOGGLE LOUVER");
+
+} /* end TC_Algorithm_Test_Needs_Heating */
+
+void TC_Algorithm_Test_Needs_Cooling_Active_Temp25(void)
+{
+    //declare any needed local variables
+    uint32  uiCmdCode=0;
+    WISE_HkTlm_t  wise_tlm;
+    
+    wise_tlm.wiseSbcState = WISE_SBC_POWERED;
+    wise_tlm.wiseTemp = 25;
+    wise_tlm.wiseHtrA_State = WISE_HTR_OFF;
+    wise_tlm.wiseHtrB_State = WISE_HTR_OFF;
+    wise_tlm.wiseLvrA_State = WISE_LVR_CLOSED;
+    wise_tlm.wiseLvrB_State = WISE_LVR_CLOSED;
+    g_TC_AppData.HkTlm.TCA_Logging_State = TC_LOG_DEBUG;
+    g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_MONITORING;   
+
+    TC_ProcessWiseTlm(&wise_tlm);
+    
+    /* Verify results */
+        //verify any expected event messages
+        //verify any expected variable changes
+        //verify correct number of event messages
+    
+    log_TCA_State(g_TC_AppData.HkTlm.TCA_Current_State);
+    UtAssert_True (g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_COOLING, "TCA_Current_State == COOLING");
+    uiCmdCode = CFE_SB_GetCmdCode(&g_TC_AppData.wise_cmd);
+
+    //TODO: WISE uses parameterized commands instead of basic commands
+    log_CC_Code(uiCmdCode, 99);
+    UtAssert_True (uiCmdCode == WISE_LVR_TOGGLE_CC, "last sent command code == TOGGLE LOUVER");
+
+} /* end TC_Algorithm_Test_Needs_Heating */
+
+void TC_Algorithm_Test_Needs_Heating_Active_Temp15(void)
+{
+    //declare any needed local variables
+    uint32  uiCmdCode=0;
+    WISE_HkTlm_t  wise_tlm;
+    
+    wise_tlm.wiseSbcState = WISE_SBC_OBSERVING;
+    wise_tlm.wiseTemp = 15;
+    wise_tlm.wiseHtrA_State = WISE_HTR_ON;
+    wise_tlm.wiseHtrB_State = WISE_HTR_OFF;
+    wise_tlm.wiseLvrA_State = WISE_LVR_CLOSED;
+    wise_tlm.wiseLvrB_State = WISE_LVR_CLOSED;
+    g_TC_AppData.HkTlm.TCA_Logging_State = TC_LOG_DEBUG;
+    g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_MONITORING;   
+
+    TC_ProcessWiseTlm(&wise_tlm);
+    
+    /* Verify results */
+        //verify any expected event messages
+        //verify any expected variable changes
+        //verify correct number of event messages
+    
+    log_TCA_State(g_TC_AppData.HkTlm.TCA_Current_State);
+    UtAssert_True (g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_HEATING, "TCA_Current_State == HEATING");
+    uiCmdCode = CFE_SB_GetCmdCode(&g_TC_AppData.wise_cmd);
+
+    //TODO: WISE uses parameterized commands instead of basic commands
+    log_CC_Code(uiCmdCode, 99);
+    UtAssert_True (uiCmdCode == WISE_LVR_TOGGLE_CC, "last sent command code == TOGGLE LOUVER");
+
+} /* end TC_Algorithm_Test_Needs_Heating */
+
+void TC_Algorithm_Test_Needs_Heating_Inactive_Temp5(void)
+{
+    //declare any needed local variables
+    uint32  uiCmdCode=0;
+    WISE_HkTlm_t  wise_tlm;
+    
+    wise_tlm.wiseSbcState = WISE_SBC_POWERED;
+    wise_tlm.wiseTemp = 5;
+    wise_tlm.wiseHtrA_State = WISE_HTR_OFF;
+    wise_tlm.wiseHtrB_State = WISE_HTR_OFF;
+    wise_tlm.wiseLvrA_State = WISE_LVR_CLOSED;
+    wise_tlm.wiseLvrB_State = WISE_LVR_CLOSED;
+    g_TC_AppData.HkTlm.TCA_Logging_State = TC_LOG_DEBUG;
+    g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_MONITORING;   
+
+    TC_ProcessWiseTlm(&wise_tlm);
+    
+    /* Verify results */
+        //verify any expected event messages
+        //verify any expected variable changes
+        //verify correct number of event messages
+    
+    log_TCA_State(g_TC_AppData.HkTlm.TCA_Current_State);
+    UtAssert_True (g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_HEATING, "TCA_Current_State == HEATING");
+    uiCmdCode = CFE_SB_GetCmdCode(&g_TC_AppData.wise_cmd);
+
+    //TODO: WISE uses parameterized commands instead of basic commands
+    log_CC_Code(uiCmdCode, 99);
+    UtAssert_True (uiCmdCode == WISE_LVR_TOGGLE_CC, "last sent command code == TOGGLE LOUVER");
+
+} /* end TC_Algorithm_Test_Needs_Heating */
+
+void TC_Algorithm_Test_Needs_Cooling_Active(void)
+{
+    //declare any needed local variables
+    uint32  uiCmdCode=0;
+    WISE_HkTlm_t  wise_tlm;
+    
+    wise_tlm.wiseSbcState = WISE_SBC_OBSERVING;
+    wise_tlm.wiseTemp = g_TC_AppData.ThresholdTemps.NeedsCooling_Active + 30;
+    wise_tlm.wiseHtrA_State = WISE_HTR_OFF;
+    wise_tlm.wiseHtrB_State = WISE_HTR_OFF;
+    wise_tlm.wiseLvrA_State = WISE_LVR_CLOSED;
+    wise_tlm.wiseLvrB_State = WISE_LVR_CLOSED;
+    g_TC_AppData.HkTlm.TCA_Logging_State = TC_LOG_DEBUG;
+    g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_MONITORING;   
+
+    TC_ProcessWiseTlm(&wise_tlm);
+    printf("Temp: %i\n", wise_tlm.wiseTemp );
+    
+    log_TCA_State(g_TC_AppData.HkTlm.TCA_Current_State);
+    UtAssert_True (g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_COOLING, "TCA_Current_State == COOLING");
+    uiCmdCode = CFE_SB_GetCmdCode(&g_TC_AppData.wise_cmd);
+
+    //TODO: WISE uses parameterized commands instead of basic commands
+    log_CC_Code(uiCmdCode, 99);
+    UtAssert_True (uiCmdCode == WISE_LVR_TOGGLE_CC, "last sent command code == TOGGLE LOUVER");
+
+}
+
 void TC_App_Test_AddTestCases(void)
 {
-    UtTest_Add(TC_Algorithm_Test_Needs_Heating, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Needs_Heating");
-    UtTest_Add(TC_Algorithm_Test_Needs_Cooling, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Needs_Cooling");
-    //UtTest_Add(Example_Function1_Test_Case3, TC_Test_Setup, TC_Test_TearDown, "Example_Function1_Test_Case3");
+
+    UtTest_Add(TC_Algorithm_Test_Given_WiseError_ShouldPlace_TC_Into_ErrorMode, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Given_WiseError_ShouldPlace_TC_Into_ErrorMode");
+    UtTest_Add(TC_Algorithm_Test_Needs_Heating_Inactive, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Needs_Heating");
+    UtTest_Add(TC_Algorithm_Test_Needs_Cooling_Inactive, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Needs_Cooling");
+    UtTest_Add(TC_Algorithm_Test_Needs_Heating_Active, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Needs_Heating_active");
+    UtTest_Add(TC_Algorithm_Test_Needs_Cooling_Active, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Needs_Cooling_active");
+    UtTest_Add(TC_Algorithm_Test_Needs_Heating_Inactive_Temp5, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Needs_Heating_Inactive_Temp5");
+    UtTest_Add(TC_Algorithm_Test_Needs_Heating_Active_Temp15, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Needs_Heating_Active_Temp15");
+    UtTest_Add(TC_Algorithm_Test_Needs_Cooling_Active_Temp25, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Needs_Cooling_Active_Temp25");
+    UtTest_Add(TC_Algorithm_Test_Needs_Cooling_Inactive_Temp40, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Needs_Cooling_active");
 
 
 } /* end TC_App_Test_AddTestCases */

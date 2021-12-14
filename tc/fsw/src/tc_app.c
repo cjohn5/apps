@@ -801,13 +801,13 @@ void TC_ProcessWiseTlm(void* TlmMsgPtr){
          CFE_ES_WriteToSysLog("INFO_TC: Entered Monitoring State");
       }
    }
-   if(wise_tlm_ptr->wiseSbcState == SBC_ERROR){
+   if(wise_tlm_ptr->wiseSbcState == WISE_SBC_ERROR){
        //place the tc app in error state
        g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_ERROR;
        CFE_ES_WriteToSysLog("ERROR_TC: Entered Error State");
    }
    //if the instrument is inactive/not-observing (off or powered)
-   else if(wise_tlm_ptr->wiseSbcState == SBC_POWERED || wise_tlm_ptr->wiseSbcState == SBC_OFF){
+   else if(wise_tlm_ptr->wiseSbcState == WISE_SBC_POWERED || wise_tlm_ptr->wiseSbcState == WISE_SBC_OFF){
        
        //if temperature is too high
        if(wise_tlm_ptr->wiseTemp >= g_TC_AppData.ThresholdTemps.NeedsCooling_Inactive){
@@ -882,14 +882,14 @@ void TC_ProcessWiseTlm(void* TlmMsgPtr){
        }
    }
    //if the instrument is active (observing)
-   else if(wise_tlm_ptr->wiseSbcState == SBC_OBSERVING){
+   else if(wise_tlm_ptr->wiseSbcState == WISE_SBC_OBSERVING){
        
        //if temperature is too high
        if(wise_tlm_ptr->wiseTemp  >= g_TC_AppData.ThresholdTemps.NeedsCooling_Active){
           if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_DEBUG){
              CFE_ES_WriteToSysLog("DEBUG_TC: Active temp is high");
            }
-           if(wise_tlm_ptr->wiseLvrA_State == LOUVER_CLOSE){
+           if(wise_tlm_ptr->wiseLvrA_State == WISE_LVR_CLOSED){
                if(g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_HEATING){
                   if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_WARNING){
                      CFE_ES_WriteToSysLog("WARNING_TC: Switching directly from HEATING to COOLING");
@@ -922,7 +922,7 @@ void TC_ProcessWiseTlm(void* TlmMsgPtr){
 
        //if temperature is cool enough
        if(wise_tlm_ptr->wiseTemp  < g_TC_AppData.ThresholdTemps.CoolEnough_Active){
-           if(wise_tlm_ptr->wiseLvrA_State == LOUVER_OPEN){
+           if(wise_tlm_ptr->wiseLvrA_State == WISE_LVR_OPEN){
                g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_MONITORING;
 
                CFE_SB_SetCmdCode((CFE_SB_Msg_t*)&g_TC_AppData.wise_cmd, WISE_LVR_TOGGLE_CC);
@@ -939,7 +939,7 @@ void TC_ProcessWiseTlm(void* TlmMsgPtr){
           if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_DEBUG){
              CFE_ES_WriteToSysLog("DEBUG_TC: Active temp is low");
            }
-           if(wise_tlm_ptr->wiseHtrA_State == HTR_OFF){
+           if(wise_tlm_ptr->wiseHtrA_State == WISE_HTR_OFF){
                if(g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_COOLING){
                   if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_WARNING){
                      CFE_ES_WriteToSysLog("WARNING_TC: Switching directly from COOLING to HEATING");
