@@ -413,6 +413,26 @@ int32 WISE_InitApp()
 
 
     /* Initialize local variables */
+gCapNames[WISE_CAP_A] = "CAP_A";
+	gCapNames[WISE_CAP_B] = "CAP_B";
+	gCapNames[WISE_CAP_C] = "CAP_C";
+	gHtrNames[WISE_HTR_A] = "HTR_A";
+	gHtrNames[WISE_HTR_B] = "HTR_B";
+	gLvrNames[WISE_LVR_A] = "LVR_A";
+	gLvrNames[WISE_LVR_B] = "LVR_B";
+	gCapStateNames[WISE_CAP_CHARGING] = "CHARGING";
+	gCapStateNames[WISE_CAP_LEAKING] = "LEAKING";
+	gCapStateNames[WISE_CAP_DISCHARGING] = "DISCHARGING";
+	gCapStateNames[WISE_CAP_BROKEN] = "BROKEN";
+	gSbcStateNames[WISE_SBC_OFF] = "OFF";
+	gSbcStateNames[WISE_SBC_POWERED] = "POWERED";
+	gSbcStateNames[WISE_SBC_OBSERVING] = "OBSERVING";
+	gSbcStateNames[WISE_SBC_ERROR] = "ERROR";
+	gHtrStateNames[WISE_HTR_ON] = "ON";
+	gHtrStateNames[WISE_HTR_OFF] = "OFF";
+	gLvrStateNames[WISE_LVR_A] = "OPEN";
+	gLvrStateNames[WISE_LVR_B] = "CLOSED";
+
     gWiseActiveCap = WISE_CAP_A;
     gWiseTemp = WISE_START_TEMP;
 
@@ -423,8 +443,7 @@ int32 WISE_InitApp()
     gWiseCapState[WISE_CAP_A] = WISE_CAP_CHARGING;
     gWiseCapState[WISE_CAP_B] = WISE_CAP_CHARGING;
     gWiseCapState[WISE_CAP_C] = WISE_CAP_CHARGING;
-
-
+	
     gWiseCapDelay[WISE_CAP_A] = 0;
     gWiseCapDelay[WISE_CAP_B] = 0;
     gWiseCapDelay[WISE_CAP_C] = 0;

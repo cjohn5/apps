@@ -182,15 +182,15 @@ typedef struct
 ** Local Variables
 */
 
-char *gCapNames[3] = {"CAP_A", "CAP_B", "CAP_C"};
-char *gHtrNames[2] = {"HTR_A", "HTR_B"};
-char *gLvrNames[2] = {"LVR_A", "LVR_B"};
+char *gCapNames[3];
+char *gHtrNames[2];
+char *gLvrNames[2];
 
 
-char *gCapStateNames[4] = {"CHARGING","LEAKING","DISCHARGING","BROKEN"};
-char *gSbcStateNames[4] = {"OFF","POWERED","OBSERVING","ERROR"};
-char *gHtrStateNames[2] = {"ON", "OFF"};
-char *gLvrStateNames[2] = {"OPEN", "CLOSED"};
+char *gCapStateNames[4];
+char *gSbcStateNames[4];
+char *gHtrStateNames[2];
+char *gLvrStateNames[2];
 
 uint8  gWiseActiveCap;
 float  gWiseTemp;
