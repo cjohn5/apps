@@ -1061,7 +1061,7 @@ void TC_ProcessWiseTlm(void* TlmMsgPtr){
    else if(wise_tlm_ptr->wiseSbcState == WISE_SBC_OBSERVING){
        
        //if temperature is too high
-       if(wise_tlm_ptr->wiseTemp  >= g_TC_AppData.ThresholdTemps.NeedsCooling_Active){
+       if(wise_tlm_ptr->wiseTemp  >= 25){
           if(g_TC_AppData.HkTlm.TCA_Logging_State <= TC_LOG_DEBUG){
              CFE_ES_WriteToSysLog("DEBUG_TC: Active temp is high");
            }
@@ -1372,9 +1372,9 @@ void TC_ProcessNewAppCmds(CFE_SB_Msg_t* MsgPtr)
             case TC_RESET_CC:
                 g_TC_AppData.HkTlm.usCmdCnt = 0;
                 g_TC_AppData.HkTlm.usCmdErrCnt = 0;
-		g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_READY;
-		g_TC_AppData.HkTlm.WISE_Tlm_Packets_Rcvd = 0;
-		g_TC_AppData.HkTlm.TCA_Logging_State = TC_LOG_WARNING;
+		        g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_READY;
+		        g_TC_AppData.HkTlm.WISE_Tlm_Packets_Rcvd = 0;
+		        g_TC_AppData.HkTlm.TCA_Logging_State = TC_LOG_WARNING;
                 CFE_EVS_SendEvent(TC_CMD_INF_EID, CFE_EVS_INFORMATION,
                                   "TC - Recvd RESET cmd (%d)", uiCmdCode);
                 break;
@@ -1384,7 +1384,7 @@ void TC_ProcessNewAppCmds(CFE_SB_Msg_t* MsgPtr)
             case TC_ENABLE_LOGGING:
                 tc_logging_level_cmd = (tc_logging_level_cmd_t*) MsgPtr;
                 g_TC_AppData.HkTlm.usCmdCnt++;
-		g_TC_AppData.HkTlm.TCA_Logging_State = tc_logging_level_cmd->CmdLoggingLevel;
+		        g_TC_AppData.HkTlm.TCA_Logging_State = tc_logging_level_cmd->CmdLoggingLevel;
                 CFE_EVS_SendEvent(TC_CMD_INF_EID, CFE_EVS_INFORMATION,
                                   "TC - Recvd ENABLE_LOGGING cmd (%d) - set to (%i)", uiCmdCode, g_TC_AppData.HkTlm.TCA_Logging_State);
                 break;

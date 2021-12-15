@@ -208,7 +208,7 @@ void TC_Algorithm_Test_Needs_Cooling_Inactive_Temp40(void)
     WISE_HkTlm_t  wise_tlm;
     
     wise_tlm.wiseSbcState = WISE_SBC_POWERED;
-    wise_tlm.wiseTemp = 40;
+    wise_tlm.wiseTemp = g_TC_AppData.ThresholdTemps.NeedsCooling_Inactive;
     wise_tlm.wiseHtrA_State = WISE_HTR_OFF;
     wise_tlm.wiseHtrB_State = WISE_HTR_OFF;
     wise_tlm.wiseLvrA_State = WISE_LVR_CLOSED;
@@ -263,7 +263,7 @@ void TC_Algorithm_Test_Needs_Heating_Active_Temp15(void)
     WISE_HkTlm_t  wise_tlm;
     
     wise_tlm.wiseSbcState = WISE_SBC_OBSERVING;
-    wise_tlm.wiseTemp = 15;
+    wise_tlm.wiseTemp = 14;
     wise_tlm.wiseHtrA_State = WISE_HTR_ON;
     wise_tlm.wiseHtrB_State = WISE_HTR_OFF;
     wise_tlm.wiseLvrA_State = WISE_LVR_CLOSED;
@@ -272,11 +272,6 @@ void TC_Algorithm_Test_Needs_Heating_Active_Temp15(void)
     g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_MONITORING;   
 
     TC_ProcessWiseTlm(&wise_tlm);
-    
-    /* Verify results */
-        //verify any expected event messages
-        //verify any expected variable changes
-        //verify correct number of event messages
     
     log_TCA_State(g_TC_AppData.HkTlm.TCA_Current_State);
     UtAssert_True (g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_HEATING, "TCA_Current_State == HEATING");
@@ -334,6 +329,52 @@ void TC_Algorithm_Test_Needs_Cooling_Active(void)
     UtAssert_True (g_TC_AppData.last_sent_command_actuator == TC_ACTUATOR_LOUVER && g_TC_AppData.last_sent_command_value == TC_COOL_ON, "last sent command set louvers to on");
 }// end TC_Algorithm_Test_Needs_Cooling_Active
 
+void TC_Algorithm_Test_Should_Switch_FromCoolingToHeating(void)
+{
+    //declare any needed local variables
+    uint32  uiCmdCode=0;
+    WISE_HkTlm_t  wise_tlm;
+    
+    wise_tlm.wiseSbcState = WISE_SBC_POWERED;
+    wise_tlm.wiseTemp = g_TC_AppData.ThresholdTemps.NeedsHeating_Inactive - 5;
+    wise_tlm.wiseHtrA_State = WISE_HTR_OFF;
+    wise_tlm.wiseHtrB_State = WISE_HTR_OFF;
+    wise_tlm.wiseLvrA_State = WISE_LVR_CLOSED;
+    wise_tlm.wiseLvrB_State = WISE_LVR_CLOSED;
+    g_TC_AppData.HkTlm.TCA_Logging_State = TC_LOG_DEBUG;
+    g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_COOLING;   
+
+    TC_ProcessWiseTlm(&wise_tlm);
+    printf("Temp: %i\n", wise_tlm.wiseTemp );
+    
+    log_TCA_State(g_TC_AppData.HkTlm.TCA_Current_State);
+    UtAssert_True (g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_HEATING, "TCA_Current_State == HEATING");
+    UtAssert_True (g_TC_AppData.last_sent_command_actuator == TC_ACTUATOR_HEATER && g_TC_AppData.last_sent_command_value == TC_HEAT_NORMAL, "last sent heaters set louvers to on");
+}// end TC_Algorithm_Test_Should_Switch_FromCoolingToHeating
+
+void TC_Algorithm_Test_Should_Switch_FromHeatingToCooling(void)
+{
+    //declare any needed local variables
+    uint32  uiCmdCode=0;
+    WISE_HkTlm_t  wise_tlm;
+    
+    wise_tlm.wiseSbcState = WISE_SBC_POWERED;
+    wise_tlm.wiseTemp = g_TC_AppData.ThresholdTemps.NeedsCooling_Inactive + 5;
+    wise_tlm.wiseHtrA_State = WISE_HTR_OFF;
+    wise_tlm.wiseHtrB_State = WISE_HTR_OFF;
+    wise_tlm.wiseLvrA_State = WISE_LVR_CLOSED;
+    wise_tlm.wiseLvrB_State = WISE_LVR_CLOSED;
+    g_TC_AppData.HkTlm.TCA_Logging_State = TC_LOG_DEBUG;
+    g_TC_AppData.HkTlm.TCA_Current_State = TC_STATE_HEATING;   
+
+    TC_ProcessWiseTlm(&wise_tlm);
+    printf("Temp: %i\n", wise_tlm.wiseTemp );
+    
+    log_TCA_State(g_TC_AppData.HkTlm.TCA_Current_State);
+    UtAssert_True (g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_COOLING, "TCA_Current_State == COOLING");
+    UtAssert_True (g_TC_AppData.last_sent_command_actuator == TC_ACTUATOR_LOUVER && g_TC_AppData.last_sent_command_value == TC_COOL_ON, "last sent command set louvers to on");
+}// end TC_Algorithm_Test_Should_Switch_FromCoolingToHeating
+
 void TC_App_Test_AddTestCases(void)
 {
 
@@ -346,7 +387,7 @@ void TC_App_Test_AddTestCases(void)
     UtTest_Add(TC_Algorithm_Test_Needs_Heating_Active_Temp15, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Needs_Heating_Active_Temp15");
     UtTest_Add(TC_Algorithm_Test_Needs_Cooling_Active_Temp25, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Needs_Cooling_Active_Temp25");
     UtTest_Add(TC_Algorithm_Test_Needs_Cooling_Inactive_Temp40, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Needs_Cooling_active");
-
+    UtTest_Add(TC_Algorithm_Test_Should_Switch_FromCoolingToHeating, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Should_Switch_FromCoolingToHeating");
 
 } /* end TC_App_Test_AddTestCases */
 
