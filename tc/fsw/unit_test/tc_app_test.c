@@ -91,6 +91,19 @@ void log_TCA_State(uint8 state)
     }
 }
 
+void TC_Verify_Threshold_Tables_Instanciated(void)
+{
+    //UtAssert_True (g_TC_AppData.HkTlm.TCA_Current_State == TC_STATE_ERROR, "TCA_Current_State == ERROR");
+    UtAssert_True (g_TC_AppData.ThresholdTemps.NeedsCooling_Active != 0, "Threshold Temps populated with a value");
+    UtAssert_True (g_TC_AppData.ThresholdTemps.CoolEnough_Active != 0, "Threshold Temps populated with a value");
+    UtAssert_True (g_TC_AppData.ThresholdTemps.HotEnough_Active != 0, "Threshold Temps populated with a value");
+    UtAssert_True (g_TC_AppData.ThresholdTemps.NeedsHeating_Active != 0, "Threshold Temps populated with a value");
+    UtAssert_True (g_TC_AppData.ThresholdTemps.NeedsCooling_Inactive != 0, "Threshold Temps populated with a value");
+    UtAssert_True (g_TC_AppData.ThresholdTemps.CoolEnough_Inactive != 0, "Threshold Temps populated with a value");
+    UtAssert_True (g_TC_AppData.ThresholdTemps.HotEnough_Inactive != 0, "Threshold Temps populated with a value");
+    UtAssert_True (g_TC_AppData.ThresholdTemps.NeedsHeating_Inactive != 0, "Threshold Temps populated with a value");
+
+}// end TC_Verify_Threshold_Tables_Instanciated
 
 void TC_Algorithm_Test_Given_WiseError_ShouldPlace_TC_Into_ErrorMode(void)
 {
@@ -377,7 +390,7 @@ void TC_Algorithm_Test_Should_Switch_FromHeatingToCooling(void)
 
 void TC_App_Test_AddTestCases(void)
 {
-
+    UtTest_Add(TC_Verify_Threshold_Tables_Instanciated, TC_Test_Setup, TC_Test_TearDown, "TC_Verify_Threshold_Tables_Instanciated");
     UtTest_Add(TC_Algorithm_Test_Given_WiseError_ShouldPlace_TC_Into_ErrorMode, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Given_WiseError_ShouldPlace_TC_Into_ErrorMode");
     UtTest_Add(TC_Algorithm_Test_Needs_Heating_Inactive, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Needs_Heating");
     UtTest_Add(TC_Algorithm_Test_Needs_Cooling_Inactive, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Needs_Cooling");
