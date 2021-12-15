@@ -157,7 +157,7 @@ void TC_Algorithm_Test_Needs_Heating_Active(void)
     uint32  uiCmdCode=0;
     WISE_HkTlm_t  wise_tlm;
     
-    wise_tlm.wiseSbcState = WISE_SBC_POWERED;
+    wise_tlm.wiseSbcState = WISE_SBC_OBSERVING;
     wise_tlm.wiseTemp = g_TC_AppData.ThresholdTemps.NeedsHeating_Active - 5;
     wise_tlm.wiseHtrA_State = WISE_HTR_OFF;
     wise_tlm.wiseHtrB_State = WISE_HTR_OFF;
@@ -247,7 +247,7 @@ void TC_Algorithm_Test_Needs_Cooling_Active_Temp25(void)
     uint32  uiCmdCode=0;
     WISE_HkTlm_t  wise_tlm;
     
-    wise_tlm.wiseSbcState = WISE_SBC_POWERED;
+    wise_tlm.wiseSbcState = WISE_SBC_OBSERVING;
     wise_tlm.wiseTemp = 25;
     wise_tlm.wiseHtrA_State = WISE_HTR_OFF;
     wise_tlm.wiseHtrB_State = WISE_HTR_OFF;
@@ -277,7 +277,7 @@ void TC_Algorithm_Test_Needs_Heating_Active_Temp15(void)
     
     wise_tlm.wiseSbcState = WISE_SBC_OBSERVING;
     wise_tlm.wiseTemp = 14;
-    wise_tlm.wiseHtrA_State = WISE_HTR_ON;
+    wise_tlm.wiseHtrA_State = WISE_HTR_OFF;
     wise_tlm.wiseHtrB_State = WISE_HTR_OFF;
     wise_tlm.wiseLvrA_State = WISE_LVR_CLOSED;
     wise_tlm.wiseLvrB_State = WISE_LVR_CLOSED;
@@ -394,7 +394,7 @@ void TC_App_Test_AddTestCases(void)
     UtTest_Add(TC_Algorithm_Test_Given_WiseError_ShouldPlace_TC_Into_ErrorMode, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Given_WiseError_ShouldPlace_TC_Into_ErrorMode");
     UtTest_Add(TC_Algorithm_Test_Needs_Heating_Inactive, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Needs_Heating");
     UtTest_Add(TC_Algorithm_Test_Needs_Cooling_Inactive, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Needs_Cooling");
-    UtTest_Add(TC_Algorithm_Test_Needs_Heating_Active, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Needs_Heating_active");
+    UtTest_Add(TC_Algorithm_Test_Needs_Heating_Active, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Needs_Heating_Active");
     UtTest_Add(TC_Algorithm_Test_Needs_Cooling_Active, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Needs_Cooling_active");
     UtTest_Add(TC_Algorithm_Test_Needs_Heating_Inactive_Temp5, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Needs_Heating_Inactive_Temp5");
     UtTest_Add(TC_Algorithm_Test_Needs_Heating_Active_Temp15, TC_Test_Setup, TC_Test_TearDown, "TC_Algorithm_Test_Needs_Heating_Active_Temp15");
